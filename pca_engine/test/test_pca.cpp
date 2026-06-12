@@ -19,7 +19,8 @@ static void write_test_model(const char* path) {
 }
 
 int tests_passed = 0;
-#define CHECK(cond, msg) do { if(!(cond)) { printf("FAIL: %s\n", msg); return; } printf("PASS: %s\n", msg); tests_passed++; } while(0)
+int tests_total = 0;
+#define CHECK(cond, msg) do { tests_total++; if(!(cond)) { printf("FAIL: %s\n", msg); return; } printf("PASS: %s\n", msg); tests_passed++; } while(0)
 
 void test_not_loaded_initially() {
     CHECK(pca_is_loaded() == 0, "not loaded initially");
@@ -78,6 +79,6 @@ int main() {
     test_wrong_dim();
     test_bad_path();
     test_free();
-    printf("\n%d/7 tests passed\n", tests_passed);
-    return (tests_passed == 7) ? 0 : 1;
+    printf("\n%d/%d checks passed\n", tests_passed, tests_total);
+    return (tests_passed == tests_total && tests_total > 0) ? 0 : 1;
 }
