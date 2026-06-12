@@ -24,7 +24,7 @@ type Config struct {
 func Load() *Config {
 	return &Config{
 		OpenRouterAPIKey:  getEnv("OPENROUTER_API_KEY", ""),
-		DefaultModel:      getEnv("DEFAULT_MODEL", "openai/gpt-oss-120b:free"),
+		DefaultModel:      getEnv("DEFAULT_MODEL", "mistralai/mistral-7b-instruct:free"),
 		Port:              getEnv("PORT", "8080"),
 		MaxHops:           getInt("MAX_HOPS", 3),
 		RateLimitRPM:      getInt("RATE_LIMIT_RPM", 20),
