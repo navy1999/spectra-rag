@@ -150,7 +150,7 @@ export function PipelineInspector({ info, streaming }: Props) {
       detail: has
         ? info!.path === "agentic"
           ? `${info!.hops} hop${info!.hops !== 1 ? "s" : ""} · ${info!.chunks ?? 0} chunks · vote-gated`
-          : "skipped — familiar query, direct chat"
+          : "skipped (familiar query, direct chat)"
         : "graph BFS, gated by 3-voter ensemble",
     },
     {
@@ -160,7 +160,7 @@ export function PipelineInspector({ info, streaming }: Props) {
       detail: has
         ? (info!.freqPenalty ?? 0) >= 0.8
           ? `redundancy ${info!.freqPenalty!.toFixed(2)} → anti-repetition directive`
-          : `redundancy ${(info!.freqPenalty ?? 0).toFixed(2)} — no directive needed`
+          : `redundancy ${(info!.freqPenalty ?? 0).toFixed(2)}, no directive needed`
         : "SVD redundancy penalty → prompt",
     },
     {
@@ -211,7 +211,7 @@ export function PipelineInspector({ info, streaming }: Props) {
             <PCAMap info={info!} />
             <p className="text-[10px] text-muted leading-relaxed mt-1">
               The query embeds, projects to 2D, and routes by its nearest regime
-              centroid — distance sets confidence and temperature.
+              centroid; distance sets confidence and temperature.
             </p>
           </>
         ) : (
@@ -252,10 +252,10 @@ export function PipelineInspector({ info, streaming }: Props) {
           Free-tier workarounds
         </p>
         <div className="space-y-1.5 text-[11px] text-zinc-600">
-          <p className="flex items-center gap-1.5"><AlgoBadge id="A1" /> PCA router — picks temperature + path</p>
-          <p className="flex items-center gap-1.5"><AlgoBadge id="A2" /> Trie guard — stands in for logit_bias</p>
-          <p className="flex items-center gap-1.5"><AlgoBadge id="A3" /> SVD penalty — for frequency_penalty</p>
-          <p className="flex items-center gap-1.5"><AlgoBadge id="A4" /> Vote ensemble — for logprobs</p>
+          <p className="flex items-center gap-1.5"><AlgoBadge id="A1" /> PCA router: picks temperature and path</p>
+          <p className="flex items-center gap-1.5"><AlgoBadge id="A2" /> Trie guard: stands in for logit_bias</p>
+          <p className="flex items-center gap-1.5"><AlgoBadge id="A3" /> SVD penalty: for frequency_penalty</p>
+          <p className="flex items-center gap-1.5"><AlgoBadge id="A4" /> Vote ensemble: for logprobs</p>
         </div>
       </div>
     </aside>

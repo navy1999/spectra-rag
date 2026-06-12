@@ -150,7 +150,7 @@ func (h *Handler) streamMock(c *gin.Context, query string, decision *router.Rout
 	c.Header("Cache-Control", "no-cache")
 
 	tokens := strings.Fields(
-		fmt.Sprintf("Mock answer for %q — but the pipeline you see ran for real: "+
+		fmt.Sprintf("Mock answer for %q. The pipeline ran for real, though: "+
 			"the query embedded and projected into PCA space, landed in the %s regime "+
 			"with %.0f%% confidence, took the %s path, and retrieved %d context chunk(s) "+
 			"from the knowledge graph. Set OPENROUTER_API_KEY and MOCK_LLM=false to get "+

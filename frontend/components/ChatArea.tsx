@@ -36,8 +36,8 @@ export function ChatArea({ messages, onSuggest }: Props) {
           <span className="text-4xl font-light text-muted">rag</span>
         </div>
         <p className="text-muted text-sm max-w-md leading-relaxed">
-          A RAG pipeline that rebuilds the LLM controls free-tier APIs leave out —
-          watch every stage run live in the pipeline panel.
+          A RAG pipeline that rebuilds the LLM controls free-tier APIs leave out,
+          and shows each stage running in the pipeline panel.
         </p>
 
         {/* How it works */}
