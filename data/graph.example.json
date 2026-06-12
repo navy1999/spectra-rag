@@ -1,0 +1,39 @@
+{
+  "nodes": [
+    {"id": "p1", "type": "paper", "name": "Attention Is All You Need", "props": {"year": 2017, "arxiv": "1706.03762"}},
+    {"id": "p2", "type": "paper", "name": "BERT: Pre-training of Deep Bidirectional Transformers", "props": {"year": 2018, "arxiv": "1810.04805"}},
+    {"id": "p3", "type": "paper", "name": "GPT-3: Language Models are Few-Shot Learners", "props": {"year": 2020, "arxiv": "2005.14165"}},
+    {"id": "p4", "type": "paper", "name": "LoRA: Low-Rank Adaptation of Large Language Models", "props": {"year": 2021, "arxiv": "2106.09685"}},
+    {"id": "p5", "type": "paper", "name": "FlashAttention: Fast and Memory-Efficient Exact Attention", "props": {"year": 2022, "arxiv": "2205.14135"}},
+    {"id": "a1", "type": "author", "name": "Ashish Vaswani", "props": {}},
+    {"id": "a2", "type": "author", "name": "Jacob Devlin", "props": {}},
+    {"id": "a3", "type": "author", "name": "Tom Brown", "props": {}},
+    {"id": "a4", "type": "author", "name": "Edward Hu", "props": {}},
+    {"id": "a5", "type": "author", "name": "Tri Dao", "props": {}},
+    {"id": "t1", "type": "topic", "name": "Transformer Architecture"},
+    {"id": "t2", "type": "topic", "name": "Pre-training"},
+    {"id": "t3", "type": "topic", "name": "Parameter-Efficient Fine-Tuning"},
+    {"id": "t4", "type": "topic", "name": "Efficient Attention"},
+    {"id": "i1", "type": "institution", "name": "Google Brain"},
+    {"id": "i2", "type": "institution", "name": "OpenAI"},
+    {"id": "i3", "type": "institution", "name": "Stanford University"}
+  ],
+  "edges": [
+    {"from": "a1", "to": "p1", "rel": "authored"},
+    {"from": "a2", "to": "p2", "rel": "authored"},
+    {"from": "a3", "to": "p3", "rel": "authored"},
+    {"from": "a4", "to": "p4", "rel": "authored"},
+    {"from": "a5", "to": "p5", "rel": "authored"},
+    {"from": "p1", "to": "t1", "rel": "introduces"},
+    {"from": "p2", "to": "t2", "rel": "uses"},
+    {"from": "p4", "to": "t3", "rel": "introduces"},
+    {"from": "p5", "to": "t4", "rel": "introduces"},
+    {"from": "p2", "to": "p1", "rel": "cites"},
+    {"from": "p3", "to": "p1", "rel": "cites"},
+    {"from": "p4", "to": "p2", "rel": "cites"},
+    {"from": "p5", "to": "p1", "rel": "cites"},
+    {"from": "a1", "to": "i1", "rel": "affiliated"},
+    {"from": "a3", "to": "i2", "rel": "affiliated"},
+    {"from": "a5", "to": "i3", "rel": "affiliated"}
+  ]
+}

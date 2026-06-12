@@ -1,0 +1,40 @@
+version: "3.9"
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    ports:
+      - "8080:8080"
+    environment:
+      - PORT=8080
+      - MOCK_LLM=${MOCK_LLM:-true}
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+      - GRAPH_PATH=/app/data/graph.json
+      - PCA_CENTROIDS_PATH=/app/data/pca_centroids.json
+      - LOG_LEVEL=info
+    volumes:
+      - ./data:/app/data:ro
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - BACKEND_URL=http://backend:8080
+      - NODE_ENV=production
+    depends_on:
+      backend:
+        condition: service_healthy
+
+networks:
+  default:
+    name: spectra-rag-local
