@@ -4,6 +4,13 @@ set(CMAKE_CXX_STANDARD 17)
 
 include(FetchContent)
 
+# Eigen's project registers its ~900-test suite with CTest when BUILD_TESTING is
+# on (the executables are EXCLUDE_FROM_ALL, so ctest lists them all as "Not Run"
+# and exits non-zero). Turn off subproject testing/docs; our own pca_tests below
+# is registered via enable_testing()/add_test and is unaffected by this option.
+set(BUILD_TESTING OFF CACHE BOOL "" FORCE)
+set(EIGEN_BUILD_DOC OFF CACHE BOOL "" FORCE)
+
 FetchContent_Declare(
   eigen
   URL https://gitlab.com/libeigen/eigen/-/archive/3.4.0/eigen-3.4.0.tar.gz
