@@ -33,7 +33,7 @@ func New(cfg *config.Config, store *retrieval.Store) *Handler {
 	return &Handler{
 		cfg:      cfg,
 		store:    store,
-		embedder: retrieval.NewEmbedder(cfg.OpenRouterAPIKey, cfg.OpenRouterBaseURL),
+		embedder: retrieval.NewEmbedder(cfg.EmbeddingsAPIKey, cfg.EmbeddingsBaseURL, cfg.EmbeddingsModel),
 		router:   pcaRouter,
 	}
 }
@@ -65,10 +65,12 @@ func (h *Handler) Query(c *gin.Context) {
 	// evaluator short-circuits, so only the final LLM stream is synthetic. This
 	// keeps the pipeline visualization meaningful without an API key.
 
-	// 1. Embed
+	// 1. Embed. On failure we do NOT fabricate a vector (that would make routing
+	// silently meaningless); the router falls back to its default and we log it.
 	emb, err := h.embedder.Embed(req.Query)
 	if err != nil {
-		emb = make([]float32, 384)
+		log.Printf("[spectra-rag] embedding failed, routing degraded to default: %v", err)
+		emb = nil
 	}
 
 	// 2. Route

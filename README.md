@@ -20,8 +20,8 @@ The stack is Next.js, Go/Gin, and an optional C++ PCA engine linked over cgo, wi
 flowchart TD
     U[User Query] --> FE[Next.js Frontend]
     FE --> BE[Go Backend / Gin]
-    BE --> EMB[Embedder\nOpenRouter or hash-mock]
-    EMB --> PCA[PCA Projection\nC++/Eigen via cgo, or pure-Go fallback]
+    BE --> EMB[Embedder\nJina embeddings, or hash mock]
+    EMB --> PCA[PCA Projection\npure-Go matvec from fitted model, or C++/Eigen via cgo]
     PCA --> ROUTER[PCA Router\nargmin regime + min-dist confidence]
     ROUTER -->|familiar: confidence >= 0.5| CHAT[Direct Chat path]
     ROUTER -->|novel: confidence < 0.5| AGENT[Agent Loop\nkeyword seed to BFS hop expansion]
@@ -61,11 +61,11 @@ This is a demonstrator, not a production system. Status of each piece:
 | Component | Status | Notes |
 |-----------|--------|-------|
 | GraphRAG retrieval | Working | Keyword-scored seeding plus BFS hop expansion over the knowledge graph |
-| PCA Router (Alg 1) | Working | Argmin centroid gives regime and base temperature, distance gives confidence and path. Real Eigen PCA with `-tags cgo_pca` and a fitted model; the default fallback is a random-projection stub, not PCA |
+| PCA Router (Alg 1) | Working (needs fitted model + real embeddings to be semantic) | Argmin centroid gives regime and base temperature, distance gives confidence and path. The pure-Go build does real PCA (`components·(x−mean)`) from `data/pca_model.json` — no cgo needed; the Eigen/cgo path is an optional fast path. Without a fitted model whose dimension matches the embeddings, projection falls back to a non-semantic dev sketch |
 | Trie Interceptor (Alg 2) | Working | Per-word and ASCII-oriented; corrects single-word near-misses, not multi-word phrases |
 | SVD Penalty (Alg 3) | Working, heuristic | Free models reject the `frequency_penalty` parameter, so the score becomes a prompt instruction rather than a logit-level penalty |
 | Letter-Vote Evaluator (Alg 4) | Working | Needs a live `OPENROUTER_API_KEY`; the voters use different personas and temperatures so they can disagree |
-| Embeddings | Partial | Real OpenRouter embeddings with a key; deterministic hash-based mock without one, so routing still runs offline |
+| Embeddings | Real with a key | Jina (`EMBEDDINGS_API_KEY`, default `jina-embeddings-v3`); OpenRouter does not serve embeddings. Without a key it uses a deterministic hash mock for offline boot, and the server logs that routing is non-semantic |
 | Knowledge graph | Demo scale | 17 curated nodes (5 papers, 5 authors, 4 topics, 3 institutions); the Python pipeline can regenerate and expand it |
 | Answer-quality eval | Harness shipped | Phase 1 ablation (see Evaluation) measures entity fidelity and repetition across conditions; run it with a key to populate `data/eval_results.md` |
 
@@ -155,16 +155,33 @@ cmake -B build && cmake --build build && ctest --test-dir build
 
 CI (`.github/workflows/ci.yml`) runs the Go suite (with `-race`), the Next.js build, and the C++ `ctest` on every push and PR.
 
-## Building the C++ PCA engine (optional)
+## Making the router real (embeddings + fitted PCA)
 
-Without this, the backend uses a pure-Go projection stub. With it, routing uses real PCA via Eigen.
+The PCA router only carries a real signal when two things are true: queries are turned into **real embeddings**, and they're projected through a **fitted PCA model of the same dimension**. Otherwise the backend logs a warning and routes on a non-semantic dev sketch.
+
+1. **Embeddings** — set an embeddings key (OpenRouter does not serve embeddings; Jina's free tier is the default):
+   ```bash
+   EMBEDDINGS_API_KEY=jina_...          # required for a real signal
+   EMBEDDINGS_BASE_URL=https://api.jina.ai/v1   # default
+   EMBEDDINGS_MODEL=jina-embeddings-v3          # default (1024-d)
+   ```
+2. **Fitted model** — generate `data/pca_model.json` from the **same** embedder (dimension must match), then commit/deploy it:
+   ```bash
+   cd scripts && pip install -r requirements.txt
+   EMBEDDINGS_API_KEY=jina_... python fit_pca.py   # writes data/pca_model.json + pca_centroids.json
+   ```
+3. **Deploy** — set `EMBEDDINGS_API_KEY` on the backend host (e.g. Railway) so runtime embeddings match the fitted model.
+
+The projection is a plain `components·(x−mean)` matrix multiply in pure Go, so no cgo is required — a `CGO_ENABLED=0` image (the Railway default) does real PCA. The C++/Eigen engine below is an optional faster path, not a requirement.
+
+### C++ PCA engine (optional fast path)
 
 ```bash
 cd pca_engine
 cmake -B build -DCMAKE_BUILD_TYPE=Release   # Eigen and nlohmann/json fetched automatically
 cmake --build build
 cd ../backend
-go build -tags cgo_pca .                     # links the engine; loads data/pca_model.json at startup
+go build -tags cgo_pca .                     # links the Eigen engine instead of the pure-Go projection
 ```
 
 ## Ingestion pipeline (optional)

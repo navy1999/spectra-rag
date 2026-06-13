@@ -28,11 +28,20 @@ func main() {
 	}
 	log.Printf("[spectra-rag] graph loaded: %d nodes", graph.NodeCount())
 
-	// Load the PCA model into the C++ engine (no-op in the pure-Go build).
+	// Load the fitted PCA model. Works in both builds: pure-Go does the
+	// projection as a matrix multiply, the cgo build uses Eigen. Without a
+	// model, projection falls back to a non-semantic dev sketch.
 	if err := pcacgo.LoadModel(cfg.PCAModelPath); err != nil {
-		log.Printf("[spectra-rag] PCA projection: %v", err)
+		log.Printf("[spectra-rag] PCA model not loaded (%v) — routing uses the dev fallback projection", err)
 	} else {
-		log.Printf("[spectra-rag] PCA model loaded from %s (Eigen engine active)", cfg.PCAModelPath)
+		log.Printf("[spectra-rag] PCA model loaded from %s — real projection active", cfg.PCAModelPath)
+	}
+
+	// Embeddings are what make the PCA signal semantic. Be loud when they're mocked.
+	if cfg.EmbeddingsAPIKey == "" {
+		log.Printf("[spectra-rag] WARNING: no EMBEDDINGS_API_KEY — embeddings use a hash mock; PCA routing is NOT meaningful")
+	} else {
+		log.Printf("[spectra-rag] embeddings: %s @ %s", cfg.EmbeddingsModel, cfg.EmbeddingsBaseURL)
 	}
 
 	// Store holds the graph + derived Trie and supports atomic hot-swap via /ingest.

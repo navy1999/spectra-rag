@@ -19,6 +19,13 @@ type Config struct {
 	PCAModelPath      string
 	OpenRouterBaseURL string
 	IngestToken       string
+
+	// Embeddings are a separate provider from the chat model. OpenRouter does
+	// not serve embeddings, so the router needs a real embeddings endpoint
+	// (default Jina) for its PCA projection to be semantically meaningful.
+	EmbeddingsBaseURL string
+	EmbeddingsModel   string
+	EmbeddingsAPIKey  string
 }
 
 func Load() *Config {
@@ -35,6 +42,9 @@ func Load() *Config {
 		PCAModelPath:      getEnv("PCA_MODEL_PATH", resolveDataFile("pca_model.json")),
 		OpenRouterBaseURL: getEnv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"),
 		IngestToken:       getEnv("INGEST_TOKEN", ""),
+		EmbeddingsBaseURL: getEnv("EMBEDDINGS_BASE_URL", "https://api.jina.ai/v1"),
+		EmbeddingsModel:   getEnv("EMBEDDINGS_MODEL", "jina-embeddings-v3"),
+		EmbeddingsAPIKey:  getEnv("EMBEDDINGS_API_KEY", ""),
 	}
 }
 
