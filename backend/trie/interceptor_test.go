@@ -67,6 +67,27 @@ func TestInterceptor_NormalizesCasing(t *testing.T) {
 	}
 }
 
+// TestInterceptor_NoShortWordFalsePositives is the regression test for the bug
+// the Phase 1 eval surfaced: short capitalized words that are edit-distance 1
+// from an unrelated entity ("Jakob" vs "Jacob", "Model" vs "Models") must NOT
+// be rewritten, or the guard corrupts correct text.
+func TestInterceptor_NoShortWordFalsePositives(t *testing.T) {
+	tr := New()
+	tr.Insert("Jacob Devlin")
+	tr.Insert("GPT-3: Language Models are Few-Shot Learners")
+	si := NewInterceptor(tr)
+	got, n := runStream(si, []string{"Jakob ", "trained ", "the ", "Model ", "today"})
+	if strings.Contains(got, "Jacob") {
+		t.Errorf("corrupted 'Jakob' -> Jacob: %q", got)
+	}
+	if strings.Contains(got, "Models") {
+		t.Errorf("corrupted 'Model' -> Models: %q", got)
+	}
+	if n != 0 {
+		t.Errorf("expected 0 corrections on correct short words, got %d", n)
+	}
+}
+
 func TestInterceptor_ReassemblesWordAcrossTokens(t *testing.T) {
 	si := testInterceptor()
 	// The entity arrives split across three tokens.

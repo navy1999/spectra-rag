@@ -109,10 +109,20 @@ func (si *StreamInterceptor) correctText(s string) (string, bool) {
 	return out.String(), changed
 }
 
-// correctWord returns the canonical spelling for w when w looks like an entity
-// (capitalized, length >= 4) and either matches a known entity word (casing
-// normalized) or is within a tight edit distance of one. Otherwise w is
-// returned unchanged.
+// minFuzzyLen gates edit-distance correction. Short capitalized words ("Model",
+// "Jakob") are frequently legitimate English/proper nouns that sit edit-distance
+// 1 from an unrelated graph entity ("Models", "Jacob"), so fuzzy-correcting them
+// corrupts correct text. Only long, distinctive names (FlashAttention,
+// Transformer, Bidirectional, Adaptation) are fuzzy-matched; shorter entities
+// (BERT, LoRA) are still fixed via exact-casing normalization below. This guard
+// was added after the Phase 1 eval showed the interceptor adding near-misses on
+// a model that already spelled entities correctly.
+const minFuzzyLen = 8
+
+// correctWord returns the canonical spelling for w when w looks like an entity.
+// It always normalizes casing for words that match a known entity word exactly
+// (e.g. "Bert" -> "BERT"); it only applies edit-distance correction to long,
+// distinctive names to avoid rewriting correct short words.
 func (si *StreamInterceptor) correctWord(w string) (string, bool) {
 	if len(w) < 4 || !isUpper(rune(w[0])) {
 		return w, false
@@ -128,15 +138,18 @@ func (si *StreamInterceptor) correctWord(w string) (string, bool) {
 		return w, false
 	}
 
+	if len(w) < minFuzzyLen {
+		return w, false
+	}
 	maxDist := 1
-	if len(w) >= 8 {
+	if len(w) >= 12 {
 		maxDist = 2
 	}
 	best := ""
 	bestDist := maxDist + 1
 	for _, cand := range si.words {
 		lc := strings.ToLower(cand)
-		if len(cand) < 4 || lw[0] != lc[0] || abs(len(cand)-len(w)) > maxDist {
+		if len(cand) < minFuzzyLen || lw[0] != lc[0] || abs(len(cand)-len(w)) > maxDist {
 			continue
 		}
 		if d := levenshtein(lw, lc); d < bestDist {

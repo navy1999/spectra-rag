@@ -33,7 +33,8 @@ __pycache__/
 Thumbs.db
 tsconfig.tsbuildinfo
 
-# Eval harness (cache + raw per-answer dump; the .md report is committed)
+# Eval harness (local cache + generated reports; results are not committed)
 eval_cache.json
 **/eval_cache.json
 data/eval_results.json
+data/eval_results.md

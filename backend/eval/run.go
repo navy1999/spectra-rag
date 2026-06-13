@@ -201,8 +201,17 @@ func (a *condAgg) mean(v float64) float64 {
 func Report(model string, temp float64, hops, n int, aggs map[CondName]*condAgg) string {
 	pct := func(v float64) string { return fmt.Sprintf("%.1f%%", v*100) }
 	var b strings.Builder
+	nRaw, nPlain, nSpec := aggs[CondRaw].n, aggs[CondRAGPlain].n, aggs[CondRAGSpectra].n
+	scored := fmt.Sprintf("%d", nRaw)
+	if !(nRaw == nPlain && nPlain == nSpec) {
+		scored = fmt.Sprintf("raw %d / plain %d / spectra %d", nRaw, nPlain, nSpec)
+	}
 	fmt.Fprintf(&b, "## Phase 1 evaluation\n\n")
-	fmt.Fprintf(&b, "Model `%s` · N=%d questions · same model across conditions · temperature %.2f · retrieval held fixed across both RAG conditions (seed + %d-hop BFS).\n\n", model, n, temp, hops)
+	fmt.Fprintf(&b, "Model `%s` · scored on %s of %d questions", model, scored, n)
+	if nRaw < n {
+		fmt.Fprintf(&b, " (remainder skipped: provider rate-limited)")
+	}
+	fmt.Fprintf(&b, " · same model across conditions · temperature %.2f · retrieval held fixed across both RAG conditions (seed + %d-hop BFS).\n\n", temp, hops)
 	fmt.Fprintf(&b, "Generated %s.\n\n", time.Now().Format("2006-01-02"))
 
 	fmt.Fprintf(&b, "| Metric | raw | rag_plain | rag_spectra |\n")

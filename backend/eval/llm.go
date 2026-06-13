@@ -2,6 +2,7 @@ package eval
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
@@ -18,10 +19,11 @@ import (
 // the identical-prompt overlap between conditions cost zero extra calls, and an
 // interrupted run resumes without repeating work.
 type Client struct {
-	APIKey   string
-	BaseURL  string
-	Model    string
-	MinDelay time.Duration // polite spacing between live calls
+	APIKey     string
+	BaseURL    string
+	Model      string
+	MinDelay   time.Duration // polite spacing between live calls
+	MaxRetries int           // attempts per call on 429/5xx
 
 	cachePath string
 	cache     map[string]string
@@ -30,18 +32,47 @@ type Client struct {
 
 func NewClient(apiKey, baseURL, model, cachePath string) *Client {
 	c := &Client{
-		APIKey:    apiKey,
-		BaseURL:   baseURL,
-		Model:     model,
-		MinDelay:  600 * time.Millisecond,
-		cachePath: cachePath,
-		cache:     map[string]string{},
-		http:      &http.Client{Timeout: 90 * time.Second},
+		APIKey:     apiKey,
+		BaseURL:    baseURL,
+		Model:      model,
+		MinDelay:   600 * time.Millisecond,
+		MaxRetries: 3,
+		cachePath:  cachePath,
+		cache:      map[string]string{},
+		http:       &http.Client{Timeout: 90 * time.Second},
 	}
 	if data, err := os.ReadFile(cachePath); err == nil {
 		_ = json.Unmarshal(data, &c.cache)
 	}
 	return c
+}
+
+// Preflight makes one minimal, un-cached, no-retry call to check whether the
+// model is currently serving (free models are frequently rate-limited upstream).
+// Returns nil if the provider answers, an error otherwise — so the runner can
+// fail over to another candidate fast instead of grinding through every call.
+func (c *Client) Preflight() error {
+	body, _ := json.Marshal(map[string]interface{}{
+		"model":      c.Model,
+		"messages":   []map[string]string{{"role": "user", "content": "ping"}},
+		"max_tokens": 1,
+		"stream":     false,
+	})
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	req, _ := http.NewRequestWithContext(ctx, "POST", c.BaseURL+"/chat/completions", bytes.NewReader(body))
+	req.Header.Set("Authorization", "Bearer "+c.APIKey)
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return err
+	}
+	raw, _ := io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if resp.StatusCode >= 400 {
+		return fmt.Errorf("HTTP %d: %s", resp.StatusCode, truncate(string(raw), 120))
+	}
+	return nil
 }
 
 func (c *Client) cacheKey(prompt string, temp float64, maxTokens int) string {
@@ -66,7 +97,7 @@ func (c *Client) Complete(prompt string, temp float64, maxTokens int) (string, e
 	})
 
 	var lastErr error
-	for attempt := 0; attempt < 5; attempt++ {
+	for attempt := 0; attempt < c.MaxRetries; attempt++ {
 		if c.MinDelay > 0 {
 			time.Sleep(c.MinDelay)
 		}
