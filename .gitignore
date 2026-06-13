@@ -38,3 +38,5 @@ eval_cache.json
 **/eval_cache.json
 data/eval_results.json
 data/eval_results.md
+data/routing_results.md
+data/routing_results.json

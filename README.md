@@ -109,6 +109,17 @@ OPENROUTER_API_KEY=sk-or-... go run ./cmd/eval -limit 5   # quick smoke
 
 Results write to `data/eval_results.md`. The metric functions are unit-tested (`go test ./eval/`) and run in CI without a key. Questions live in `data/eval_questions.json` and are meant to be edited. Routing (A1) and the vote evaluator (A4) affect path and retrieval rather than these two metrics and are reported separately.
 
+### A1 routing evaluation
+
+A separate, judge-free harness asks whether the PCA router's chat-vs-agentic decision beats trivial baselines, over a labeled set (`data/routing_questions.json`). It needs only one embedding per question (no chat LLM), so it's cheap — but the `pca` row is meaningful only with real embeddings + a fitted model (`EMBEDDINGS_API_KEY` set); otherwise it routes on the dev sketch and is flagged.
+
+```bash
+cd backend
+EMBEDDINGS_API_KEY=jina_... go run ./cmd/routeeval
+```
+
+It compares `pca` against `length` (route by query length), `hit_count` (route by graph keyword hits), and the `always_chat`/`always_agentic` baselines, reporting routing accuracy + an agentic-rate cost proxy. The bar is real: on the shipped 16-question set the `length` one-liner already scores ~75%, so the PCA router has to clear that to justify its complexity. If it doesn't, that's a legitimate finding — simplify, or fit a supervised projection (LDA) on labeled queries.
+
 ## Quick start (Docker, no API key needed)
 
 ```bash

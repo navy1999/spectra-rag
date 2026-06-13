@@ -87,25 +87,46 @@ def fit_pca(papers_path="data/papers.json", graph_path="data/graph.json", output
     pca = PCA(n_components=2)
     coords = pca.fit_transform(embeddings)
 
-    # Regime centroids via SEMANTIC ANCHORS, not keyword buckets. We embed a
-    # natural-language description of each regime with the same model and project
-    # it through the fitted PCA; a query then routes to whichever description it
-    # lands nearest in PCA space. This grounds the regime in meaning instead of a
-    # brittle keyword list, and needs no labeled data.
-    #
-    # Names MUST match the backend's regimeBaseTemp keys (router/pca_router.go).
-    # Add regimes by adding entries here and a base temperature there.
-    #
-    # Honest limitation: the PCA basis is still fit on the corpus (unsupervised),
-    # so its axes reflect corpus variance, not the logic/creative axis — anchors
-    # fix the *labels*, not the *projection*. Fitting LDA on labeled example
-    # queries would also fix the axis (see the A1 notes).
+    import numpy as np
+    from sklearn.cluster import KMeans
+
+    # Centroids FROM THE CORPUS: cluster the embeddings (k=2) and project the
+    # cluster centers into PCA space, so centroids sit where the data actually
+    # lives. (Earlier semantic-anchor centroids projected to a dead zone near the
+    # origin, away from the corpus, which — with mis-scaled thresholds — collapsed
+    # the router to always-chat.) Each cluster is then labeled by whichever anchor
+    # description it is closest to, so "logic"/"creative" stay interpretable and
+    # match the backend's regimeBaseTemp keys (router/pca_router.go). Honest note:
+    # on a homogeneous corpus these clusters are topic sub-splits, not a true
+    # logic-vs-creative axis.
     anchors = {
         "logic": "A precise, factual, analytical question seeking a correct, deterministic, lookup-style answer grounded in specific facts.",
         "creative": "An open-ended, generative, exploratory or imaginative request inviting free-form, speculative, or creative writing.",
     }
-    anchor_coords = pca.transform(embed(list(anchors.values())))
-    centroids = {name: anchor_coords[i].tolist() for i, name in enumerate(anchors)}
+    names = list(anchors.keys())
+    emb_arr = np.array(embeddings, dtype=float)
+    k = min(len(names), len(emb_arr))
+    km = KMeans(n_clusters=k, n_init=10, random_state=0).fit(emb_arr)
+    centers_2d = pca.transform(km.cluster_centers_)
+    anchor_emb = np.array(embed(list(anchors.values())), dtype=float)
+
+    def cos(a, b):
+        return float(a @ b / (np.linalg.norm(a) * np.linalg.norm(b) + 1e-9))
+
+    if k == 2:
+        s = [[cos(km.cluster_centers_[ci], anchor_emb[ai]) for ai in range(2)] for ci in range(2)]
+        order = (0, 1) if s[0][0] + s[1][1] >= s[0][1] + s[1][0] else (1, 0)
+        centroids = {names[order[ci]]: centers_2d[ci].tolist() for ci in range(2)}
+    else:
+        centroids = {names[ci]: centers_2d[ci].tolist() for ci in range(k)}
+
+    # Calibrate the chat/agentic ramp to the corpus distance distribution so the
+    # boundary matches the real projection scale (fixed 0.3/1.0 constants were
+    # tuned for a unit-scale dev projection and never fired on real embeddings).
+    cen = np.array(list(centroids.values()))
+    dists = np.min(np.linalg.norm(coords[:, None, :] - cen[None, :, :], axis=2), axis=1)
+    dist_near = float(np.percentile(dists, 40))
+    dist_far = float(np.percentile(dists, 90))
 
     Path(output_dir).mkdir(exist_ok=True)
     Path(f"{output_dir}/pca_model.json").write_text(json.dumps({
@@ -115,12 +136,17 @@ def fit_pca(papers_path="data/papers.json", graph_path="data/graph.json", output
         "embedding_model": MODEL,
         "dim": dim,
     }, indent=2))
-    Path(f"{output_dir}/pca_centroids.json").write_text(json.dumps(centroids, indent=2))
+    Path(f"{output_dir}/pca_centroids.json").write_text(json.dumps({
+        "centroids": centroids,
+        "dist_near": dist_near,
+        "dist_far": dist_far,
+    }, indent=2))
     Path(f"{output_dir}/pca_labels.json").write_text(json.dumps([
         {"id": items[i]["id"], "x": float(coords[i, 0]), "y": float(coords[i, 1])}
         for i in range(len(items))
     ], indent=2))
-    print(f"Saved pca_model.json (dim={dim}), pca_centroids.json, pca_labels.json to {output_dir}/")
+    print(f"Saved pca_model.json (dim={dim}), pca_centroids.json (dist_near={dist_near:.3f}, dist_far={dist_far:.3f}), pca_labels.json to {output_dir}/")
+    print(f"Centroids (corpus k-means, anchor-labeled): {centroids}")
     print("Set EMBEDDINGS_API_KEY (same provider) on the backend so runtime embeddings match this model.")
 
 

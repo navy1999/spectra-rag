@@ -29,9 +29,35 @@ func TestNoveltyFromDist(t *testing.T) {
 		{2.0, 1.0},  // clamped high
 	}
 	for _, c := range cases {
-		if got := noveltyFromDist(c.dist); math.Abs(got-c.want) > 1e-9 {
+		if got := noveltyFromDist(c.dist, defaultDistNear, defaultDistFar); math.Abs(got-c.want) > 1e-9 {
 			t.Errorf("noveltyFromDist(%v) = %v, want %v", c.dist, got, c.want)
 		}
+	}
+}
+
+// TestNewPCARouter_CalibratedSchema verifies the current centroids schema with
+// data-derived thresholds is parsed and that those thresholds (not the defaults)
+// drive the chat/agentic boundary.
+func TestNewPCARouter_CalibratedSchema(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "centroids.json")
+	// Centroids near the origin with a small-scale ramp (like real Jina+PCA).
+	body := `{"centroids":{"logic":[0.05,0.05],"creative":[-0.05,-0.05]},"dist_near":0.1,"dist_far":0.3}`
+	if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	r, err := NewPCARouter(path)
+	if err != nil {
+		t.Fatalf("NewPCARouter: %v", err)
+	}
+	if r.distNear != 0.1 || r.distFar != 0.3 {
+		t.Fatalf("thresholds = %v/%v, want 0.1/0.3", r.distNear, r.distFar)
+	}
+	// A point ~0.28 from the logic centroid is past the midpoint (0.2) of the
+	// calibrated ramp, so it must route agentic — under the old fixed 0.3/1.0
+	// ramp that same point would have read as fully familiar (chat).
+	d := r.decide([2]float64{0.33, 0.05})
+	if d.Path != PathAgentic {
+		t.Errorf("path = %s, want agentic (dist ~0.28 > calibrated midpoint 0.2)", d.Path)
 	}
 }
 

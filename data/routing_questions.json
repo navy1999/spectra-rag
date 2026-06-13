@@ -1,0 +1,21 @@
+{
+  "_comment": "Labeled set for the A1 routing evaluation. 'path' is the author-judged correct route: 'chat' for single-entity/definitional lookups answerable directly, 'agentic' for relational/multi-hop questions that need graph traversal. Labels are a judgment call and debatable; the point is to compare the PCA router against trivial heuristics on the SAME labels. Balanced 8/8 so the always-chat / always-agentic baselines cap at ~50%.",
+  "questions": [
+    { "id": "r01", "text": "What is FlashAttention?", "path": "chat" },
+    { "id": "r02", "text": "What is BERT?", "path": "chat" },
+    { "id": "r03", "text": "What does LoRA stand for?", "path": "chat" },
+    { "id": "r04", "text": "Who is Tri Dao?", "path": "chat" },
+    { "id": "r05", "text": "What is the Transformer architecture?", "path": "chat" },
+    { "id": "r06", "text": "What year was GPT-3 published?", "path": "chat" },
+    { "id": "r07", "text": "Define parameter-efficient fine-tuning.", "path": "chat" },
+    { "id": "r08", "text": "What is efficient attention?", "path": "chat" },
+    { "id": "r09", "text": "Which papers cite Attention Is All You Need?", "path": "agentic" },
+    { "id": "r10", "text": "How does LoRA relate to BERT and the Transformer?", "path": "agentic" },
+    { "id": "r11", "text": "Which institutions are connected to the authors of FlashAttention?", "path": "agentic" },
+    { "id": "r12", "text": "Trace the lineage from the Transformer to FlashAttention.", "path": "agentic" },
+    { "id": "r13", "text": "Compare BERT and GPT-3 in architecture and training approach.", "path": "agentic" },
+    { "id": "r14", "text": "Which authors are affiliated with OpenAI and what did they publish?", "path": "agentic" },
+    { "id": "r15", "text": "What topics do the papers citing Attention introduce?", "path": "agentic" },
+    { "id": "r16", "text": "Connect Ashish Vaswani to FlashAttention through the graph.", "path": "agentic" }
+  ]
+}

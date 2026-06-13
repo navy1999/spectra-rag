@@ -47,15 +47,20 @@ type Centroid struct {
 
 type PCARouter struct {
 	centroids []Centroid
+	// distNear/distFar bound the distance→novelty ramp. They are read from the
+	// centroids file (calibrated by fit_pca to the corpus distance distribution)
+	// because the right scale depends entirely on the embedding model and PCA
+	// fit — the old fixed defaults were tuned for a unit-scale dev projection and
+	// collapsed the router to always-chat on real embeddings.
+	distNear float64
+	distFar  float64
 }
 
-// Policy constants. Distances at/below distNear count as fully familiar;
-// at/above distFar as fully novel. The agentic path triggers when confidence
-// drops below 0.5 — geometrically the same d≈0.65 boundary the previous
-// scalar-only implementation used, so routing behavior stays continuous.
+// Policy constants. The agentic path triggers when confidence drops below 0.5.
+// distNear/distFar default here but are normally overridden by the fitted file.
 const (
-	distNear                = 0.3
-	distFar                 = 1.0
+	defaultDistNear         = 0.3
+	defaultDistFar          = 1.0
 	noveltyTempBoost        = 0.3 // added to base temp as novelty goes 0→1
 	maxTemp                 = 0.9
 	agenticConfidenceCutoff = 0.5
@@ -72,23 +77,49 @@ var regimeBaseTemp = map[string]float64{
 }
 
 func NewPCARouter(centroidsPath string) (*PCARouter, error) {
+	r := &PCARouter{distNear: defaultDistNear, distFar: defaultDistFar}
+
 	data, err := os.ReadFile(centroidsPath)
 	if err != nil {
-		// Use hardcoded defaults if file missing
-		return &PCARouter{centroids: []Centroid{
+		// Hardcoded defaults if the file is missing.
+		r.centroids = []Centroid{
 			{Name: "logic", X: 0.42, Y: -0.18},
 			{Name: "creative", X: -0.31, Y: 0.29},
-		}}, nil
+		}
+		return r, nil
 	}
-	var c map[string][2]float64
-	if err := json.Unmarshal(data, &c); err != nil {
+
+	// Current schema: {"centroids": {name:[x,y]}, "dist_near": f, "dist_far": f}.
+	var doc struct {
+		Centroids map[string][2]float64 `json:"centroids"`
+		DistNear  *float64              `json:"dist_near"`
+		DistFar   *float64              `json:"dist_far"`
+	}
+	if err := json.Unmarshal(data, &doc); err == nil && len(doc.Centroids) > 0 {
+		for name, xy := range doc.Centroids {
+			r.centroids = append(r.centroids, Centroid{Name: name, X: xy[0], Y: xy[1]})
+		}
+		if doc.DistNear != nil {
+			r.distNear = *doc.DistNear
+		}
+		if doc.DistFar != nil {
+			r.distFar = *doc.DistFar
+		}
+		if r.distFar <= r.distNear { // guard against a degenerate ramp
+			r.distNear, r.distFar = defaultDistNear, defaultDistFar
+		}
+		return r, nil
+	}
+
+	// Legacy schema: a flat {name: [x,y]} map.
+	var flat map[string][2]float64
+	if err := json.Unmarshal(data, &flat); err != nil {
 		return nil, fmt.Errorf("parse centroids: %w", err)
 	}
-	var cents []Centroid
-	for name, coords := range c {
-		cents = append(cents, Centroid{Name: name, X: coords[0], Y: coords[1]})
+	for name, xy := range flat {
+		r.centroids = append(r.centroids, Centroid{Name: name, X: xy[0], Y: xy[1]})
 	}
-	return &PCARouter{centroids: cents}, nil
+	return r, nil
 }
 
 // Centroids returns the router's centroid set (for diagnostics/visualization).
@@ -117,7 +148,7 @@ func (r *PCARouter) decide(proj [2]float64) *RouteDecision {
 		}
 	}
 
-	novelty := noveltyFromDist(minDist)
+	novelty := noveltyFromDist(minDist, r.distNear, r.distFar)
 	confidence := 1 - novelty
 
 	base, ok := regimeBaseTemp[regime]
@@ -142,15 +173,19 @@ func (r *PCARouter) decide(proj [2]float64) *RouteDecision {
 	}
 }
 
-// noveltyFromDist maps distance-to-nearest-centroid to [0,1].
-func noveltyFromDist(d float64) float64 {
-	if d <= distNear {
+// noveltyFromDist maps distance-to-nearest-centroid to [0,1] over the calibrated
+// [near, far] ramp.
+func noveltyFromDist(d, near, far float64) float64 {
+	if far <= near {
 		return 0
 	}
-	if d >= distFar {
+	if d <= near {
+		return 0
+	}
+	if d >= far {
 		return 1
 	}
-	return (d - distNear) / (distFar - distNear)
+	return (d - near) / (far - near)
 }
 
 func l2(x1, y1, x2, y2 float64) float64 {
