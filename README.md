@@ -67,7 +67,7 @@ This is a demonstrator, not a production system. Status of each piece:
 | Letter-Vote Evaluator (Alg 4) | Working | Needs a live `OPENROUTER_API_KEY`; the voters use different personas and temperatures so they can disagree |
 | Embeddings | Partial | Real OpenRouter embeddings with a key; deterministic hash-based mock without one, so routing still runs offline |
 | Knowledge graph | Demo scale | 17 curated nodes (5 papers, 5 authors, 4 topics, 3 institutions); the Python pipeline can regenerate and expand it |
-| Answer-quality eval | Not started | Speed benchmarks exist; a labeled eval set to quantify quality gains does not yet |
+| Answer-quality eval | Harness shipped | Phase 1 ablation (see Evaluation) measures entity fidelity and repetition across conditions; run it with a key to populate `data/eval_results.md` |
 
 ## Benchmarks
 
@@ -82,6 +82,32 @@ Pure-Go algorithm micro-benchmarks (no network), `go test -bench`. Machine: Inte
 | Trie interceptor (build vocab, stream a 35-word paragraph) | ~227 µs | 734 |
 
 Reproduce with `cd backend && go test -bench=. -benchmem ./...`.
+
+## Evaluation (Phase 1)
+
+Does the framework actually improve a small model's output? Phase 1 is a controlled ablation: it runs one small model (default `meta-llama/llama-3.2-3b-instruct:free`) under three conditions over a graph-grounded question set, holding the model and retrieved context fixed so the only variable is the spectra layers.
+
+| Condition | Context | Spectra layers |
+|---|---|---|
+| `raw` | none | none |
+| `rag_plain` | retrieved | none |
+| `rag_spectra` | retrieved | SVD redundancy directive (A3) + trie entity guard (A2) |
+
+Metrics are judge-free string measures, so there is no "LLM grading an LLM" circularity:
+
+- **Entity-spelling fidelity** (the trie guard, A2): rate at which expected entities appear with their exact canonical spelling vs. as near-misses (`Flash Attention`, `Bert`, `FlashAttension`).
+- **Repetition** (the SVD penalty, A3): distinct-2 ratio, higher is less repetitive.
+- **Groundedness**: fraction of mentioned graph entities that appear in the retrieved context.
+
+The `rag_spectra` condition reuses the real `synthesis`, `retrieval`, and `trie` packages, not reimplementations. Run it (needs a key; responses are cached, 429s are retried):
+
+```bash
+cd backend
+OPENROUTER_API_KEY=sk-or-... go run ./cmd/eval            # full set
+OPENROUTER_API_KEY=sk-or-... go run ./cmd/eval -limit 5   # quick smoke
+```
+
+Results write to `data/eval_results.md`. The metric functions are unit-tested (`go test ./eval/`) and run in CI without a key. Questions live in `data/eval_questions.json` and are meant to be edited. Routing (A1) and the vote evaluator (A4) affect path and retrieval rather than these two metrics and are reported separately.
 
 ## Quick start (Docker, no API key needed)
 

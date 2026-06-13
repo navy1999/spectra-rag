@@ -1,0 +1,28 @@
+{
+  "_comment": "Phase 1 eval set. Every question must be answerable from data/graph.json (5 papers, their authors, topics, institutions). 'entities' lists canonical strings a correct answer should contain; single-token entities >= 4 chars (FlashAttention, Transformer, BERT, LoRA, Vaswani, ...) are where the trie entity guard (A2) is measurable. Edit freely.",
+  "model": "meta-llama/llama-3.2-3b-instruct:free",
+  "questions": [
+    { "id": "q01", "text": "What is FlashAttention?", "entities": ["FlashAttention", "Attention"] },
+    { "id": "q02", "text": "Who is the author of FlashAttention and where do they work?", "entities": ["FlashAttention", "Tri Dao", "Stanford"] },
+    { "id": "q03", "text": "What architecture does BERT build on?", "entities": ["BERT", "Transformer"] },
+    { "id": "q04", "text": "What does LoRA stand for and what problem does it solve?", "entities": ["LoRA", "Adaptation"] },
+    { "id": "q05", "text": "Who wrote the paper Attention Is All You Need?", "entities": ["Attention", "Vaswani"] },
+    { "id": "q06", "text": "Which paper introduced the Transformer architecture?", "entities": ["Attention", "Transformer"] },
+    { "id": "q07", "text": "What is GPT-3 and who published it?", "entities": ["GPT-3", "Brown", "OpenAI"] },
+    { "id": "q08", "text": "Which papers cite Attention Is All You Need?", "entities": ["BERT", "GPT-3", "FlashAttention", "Attention"] },
+    { "id": "q09", "text": "What topic does FlashAttention introduce?", "entities": ["FlashAttention", "Efficient Attention"] },
+    { "id": "q10", "text": "Who introduced LoRA and which institution were they at?", "entities": ["LoRA", "Edward Hu"] },
+    { "id": "q11", "text": "What pre-training approach does BERT use?", "entities": ["BERT", "Pre-training", "Bidirectional"] },
+    { "id": "q12", "text": "How does FlashAttention relate to the Transformer?", "entities": ["FlashAttention", "Transformer", "Attention"] },
+    { "id": "q13", "text": "Which institution is Ashish Vaswani affiliated with?", "entities": ["Vaswani", "Google Brain"] },
+    { "id": "q14", "text": "What kind of fine-tuning does LoRA enable?", "entities": ["LoRA", "Parameter-Efficient Fine-Tuning"] },
+    { "id": "q15", "text": "Summarize what BERT contributed to NLP.", "entities": ["BERT", "Transformer", "Pre-training"] },
+    { "id": "q16", "text": "Who is Tri Dao and what did he publish?", "entities": ["Tri Dao", "FlashAttention"] },
+    { "id": "q17", "text": "Compare BERT and GPT-3 in terms of their approach.", "entities": ["BERT", "GPT-3", "Transformer"] },
+    { "id": "q18", "text": "What makes FlashAttention memory-efficient?", "entities": ["FlashAttention", "Efficient Attention"] },
+    { "id": "q19", "text": "Which authors are affiliated with OpenAI?", "entities": ["Brown", "OpenAI"] },
+    { "id": "q20", "text": "What problem in attention does FlashAttention address?", "entities": ["FlashAttention", "Attention", "Efficient Attention"] },
+    { "id": "q21", "text": "Name the paper that adapts large language models with low-rank updates.", "entities": ["LoRA", "Adaptation"] },
+    { "id": "q22", "text": "Trace the lineage from the Transformer to FlashAttention.", "entities": ["Transformer", "Attention", "FlashAttention"] }
+  ]
+}

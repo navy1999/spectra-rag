@@ -32,3 +32,8 @@ __pycache__/
 .DS_Store
 Thumbs.db
 tsconfig.tsbuildinfo
+
+# Eval harness (cache + raw per-answer dump; the .md report is committed)
+eval_cache.json
+**/eval_cache.json
+data/eval_results.json
