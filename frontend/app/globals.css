@@ -1,24 +1,47 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --bg: #F7F6F3;
-  --sidebar: #EFEDE8;
+  --canvas: #fafafa;
+  --panel: #ffffff;
   --accent: #18181b;
-  --muted: #6b7280;
+  --muted: #71717a;
   --border: #e4e4e7;
 }
 
 body {
-  background-color: var(--bg);
-  font-family: 'Inter', sans-serif;
+  background-color: var(--canvas);
   color: var(--accent);
+  font-feature-settings: "cv11", "ss01";
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
-.scrollbar-thin::-webkit-scrollbar { width: 4px; }
-.scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
-.scrollbar-thin::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 2px; }
+.scrollbar-thin::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.scrollbar-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-thin::-webkit-scrollbar-thumb {
+  background: #d4d4d8;
+  border-radius: 3px;
+}
+.scrollbar-thin:hover::-webkit-scrollbar-thumb {
+  background: #a1a1aa;
+}
+
+/* Subtle dotted grid backdrop for the instrument feel. */
+.bg-grid {
+  background-image: radial-gradient(circle, #e4e4e7 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+
+/* Tabular, aligned numerics for telemetry. */
+.tnum {
+  font-variant-numeric: tabular-nums;
+}

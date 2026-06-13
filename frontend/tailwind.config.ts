@@ -9,14 +9,33 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        offwhite: "#F7F6F3",
-        sidebar: "#EFEDE8",
-        accent: "#18181b",
-        muted: "#6b7280",
-        border: "#e4e4e7",
+        // Cool, neutral instrument palette (Vercel/Linear-adjacent).
+        canvas: "#FAFAFA",
+        offwhite: "#FAFAFA",
+        sidebar: "#F4F4F5",
+        panel: "#FFFFFF",
+        accent: "#18181B",
+        muted: "#71717A",
+        border: "#E4E4E7",
+        faint: "#F4F4F5",
+        // Status semantics.
+        live: "#10B981",
+        warn: "#F59E0B",
+        down: "#EF4444",
+        // Regime semantics (flat, no gradients).
+        logic: "#0EA5E9",
+        creative: "#8B5CF6",
       },
       fontFamily: {
-        sans: ["Inter", "sans-serif"],
+        sans: ["var(--font-inter)", "Inter", "system-ui", "sans-serif"],
+        mono: [
+          "var(--font-mono)",
+          "ui-monospace",
+          "SFMono-Regular",
+          "Menlo",
+          "Consolas",
+          "monospace",
+        ],
       },
     },
   },

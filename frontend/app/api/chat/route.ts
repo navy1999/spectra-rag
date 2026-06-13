@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:8080";
+const FALLBACK_MODEL = process.env.DEFAULT_MODEL ?? "openai/gpt-oss-120b:free";
+
+function sse(obj: unknown): string {
+  return `data: ${JSON.stringify(obj)}\n\n`;
+}
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
@@ -16,19 +21,20 @@ export async function POST(req: NextRequest) {
     Connection: "keep-alive",
   });
 
-  // Try the Go backend first. Await the response headers (not the full body)
-  // so X-Route-Path / X-Hop-Count / X-Latency-Ms can be forwarded to the
-  // client — headers can't be added to a NextResponse after construction.
+  // Reach the Go backend first. Await the response head (not the body) so the
+  // routing headers and the operating mode can be forwarded to the client;
+  // headers can't be added to a NextResponse after construction.
   let backendRes: Response | null = null;
   try {
     backendRes = await fetch(`${BACKEND_URL}/query`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query }),
-      signal: AbortSignal.timeout(30000),
+      signal: AbortSignal.timeout(60000),
     });
     if (!backendRes.ok) throw new Error(`Backend ${backendRes.status}`);
 
+    headers.set("X-Spectra-Mode", "pipeline");
     headers.set("X-Route-Path", backendRes.headers.get("X-Route-Path") ?? "chat");
     headers.set("X-Hop-Count", backendRes.headers.get("X-Hop-Count") ?? "0");
     headers.set("X-Route-Regime", backendRes.headers.get("X-Route-Regime") ?? "");
@@ -36,6 +42,7 @@ export async function POST(req: NextRequest) {
     headers.set("X-Freq-Penalty", backendRes.headers.get("X-Freq-Penalty") ?? "");
   } catch {
     backendRes = null;
+    headers.set("X-Spectra-Mode", process.env.OPENROUTER_API_KEY ? "fallback" : "unavailable");
   }
 
   (async () => {
@@ -43,7 +50,6 @@ export async function POST(req: NextRequest) {
       if (backendRes) {
         const reader = backendRes.body?.getReader();
         if (!reader) throw new Error("No body");
-
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
@@ -52,48 +58,94 @@ export async function POST(req: NextRequest) {
         return;
       }
 
-      // Fallback: direct OpenRouter call
+      // The Go backend is unreachable. Fall back to a direct provider call if a
+      // key is configured here; otherwise report it as a diagnostic, not an
+      // answer.
       const apiKey = process.env.OPENROUTER_API_KEY;
       if (!apiKey) {
-        await writer.write(encoder.encode('data: {"token":"[Backend unavailable — set OPENROUTER_API_KEY or start the Go backend]"}\n\ndata: [DONE]\n\n'));
+        await writer.write(
+          encoder.encode(
+            sse({
+              error: {
+                stage: "backend",
+                code: 0,
+                message:
+                  "The spectra Go backend is unreachable and no fallback key is configured. Start the backend (cd backend && go run .) to run the full pipeline.",
+              },
+            }) + "data: [DONE]\n\n"
+          )
+        );
         return;
       }
 
+      // Fallback mode: a plain provider call with none of the spectra pipeline.
+      await writer.write(
+        encoder.encode(
+          sse({
+            system: {
+              mode: "fallback",
+              message:
+                "Go backend unreachable. Answering with a direct model call; routing, retrieval, and the control-surface algorithms are bypassed.",
+            },
+          })
+        )
+      );
+
       const orRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
+        headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "openai/gpt-oss-120b:free",
+          model: FALLBACK_MODEL,
           messages: [{ role: "user", content: query }],
           stream: true,
         }),
       });
 
+      if (!orRes.ok) {
+        await writer.write(
+          encoder.encode(
+            sse({ error: { stage: "openrouter", code: orRes.status, message: `Fallback provider returned HTTP ${orRes.status}.` } }) +
+              "data: [DONE]\n\n"
+          )
+        );
+        return;
+      }
+
       const reader = orRes.body?.getReader();
       if (reader) {
         const decoder = new TextDecoder();
+        let buf = "";
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
-          const text = decoder.decode(value, { stream: true });
-          for (const line of text.split("\n")) {
-            if (line.startsWith("data: ")) {
-              const d = line.slice(6).trim();
-              if (d === "[DONE]") { await writer.write(encoder.encode("data: [DONE]\n\n")); break; }
-              try {
-                const p = JSON.parse(d);
-                const token = p.choices?.[0]?.delta?.content;
-                if (token) await writer.write(encoder.encode(`data: ${JSON.stringify({ token })}\n\n`));
-              } catch {}
+          buf += decoder.decode(value, { stream: true });
+          const lines = buf.split("\n");
+          buf = lines.pop() ?? "";
+          for (const line of lines) {
+            if (!line.startsWith("data: ")) continue;
+            const d = line.slice(6).trim();
+            if (d === "[DONE]") {
+              await writer.write(encoder.encode("data: [DONE]\n\n"));
+              return;
+            }
+            try {
+              const p = JSON.parse(d);
+              const token = p.choices?.[0]?.delta?.content;
+              if (token) await writer.write(encoder.encode(sse({ token })));
+            } catch {
+              /* ignore keepalives / partials */
             }
           }
         }
+        await writer.write(encoder.encode("data: [DONE]\n\n"));
       }
-    } catch {
-      // best-effort fallback; nothing more to send if this also fails
+    } catch (err) {
+      await writer.write(
+        encoder.encode(
+          sse({ error: { stage: "proxy", code: 0, message: err instanceof Error ? err.message : "stream failed" } }) +
+            "data: [DONE]\n\n"
+        )
+      );
     } finally {
       await writer.close();
     }

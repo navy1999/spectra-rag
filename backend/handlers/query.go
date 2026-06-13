@@ -170,6 +170,35 @@ func (h *Handler) streamMock(c *gin.Context, query string, decision *router.Rout
 	})
 }
 
+// errorEvent encodes a diagnostic SSE event. It is intentionally a distinct
+// channel from token events so the client can surface failures in its
+// diagnostics UI rather than printing operational text into the answer body.
+func errorEvent(stage string, code int, message string) string {
+	return mustJSON(map[string]interface{}{
+		"error": map[string]interface{}{
+			"stage":   stage,
+			"code":    code,
+			"message": message,
+		},
+	})
+}
+
+// summarizeProviderError turns a raw provider error body into a short, human
+// sentence for the diagnostics panel. Free models are frequently rate-limited
+// upstream; that case gets a clearer message than the raw JSON.
+func summarizeProviderError(code int, body string) string {
+	if code == 429 || strings.Contains(strings.ToLower(body), "rate-limit") {
+		return "The free model is rate-limited upstream right now. Retry shortly, or set DEFAULT_MODEL to a less congested free model."
+	}
+	if len(body) > 200 {
+		body = body[:200] + "…"
+	}
+	if body == "" {
+		return fmt.Sprintf("Model provider returned HTTP %d.", code)
+	}
+	return fmt.Sprintf("Model provider returned HTTP %d: %s", code, body)
+}
+
 // metaEvent encodes the trailing SSE event carrying post-stream metrics. These
 // are sent in-band (not as response headers) because their values are only known
 // after streaming has begun, at which point headers are already flushed.
@@ -203,7 +232,7 @@ func (h *Handler) streamLLM(c *gin.Context, prompt string, temp float64, interce
 	if err != nil {
 		c.Stream(func(w io.Writer) bool {
 			fmt.Fprintf(w, "data: %s\n\n", routeEvt)
-			fmt.Fprintf(w, "data: %s\n\n", mustJSON(map[string]string{"token": "[Error contacting OpenRouter: " + err.Error() + "]"}))
+			fmt.Fprintf(w, "data: %s\n\n", errorEvent("openrouter", 0, "could not reach the model provider: "+err.Error()))
 			fmt.Fprintf(w, "data: [DONE]\n\n")
 			return false
 		})
@@ -213,11 +242,11 @@ func (h *Handler) streamLLM(c *gin.Context, prompt string, temp float64, interce
 
 	if resp.StatusCode >= 400 {
 		errBody, _ := io.ReadAll(resp.Body)
-		log.Printf("[spectra-rag] openrouter error %d: %s", resp.StatusCode, strings.TrimSpace(string(errBody)))
-		msg := fmt.Sprintf("[OpenRouter API error %d: %s]", resp.StatusCode, strings.TrimSpace(string(errBody)))
+		detail := strings.TrimSpace(string(errBody))
+		log.Printf("[spectra-rag] openrouter error %d: %s", resp.StatusCode, detail)
 		c.Stream(func(w io.Writer) bool {
 			fmt.Fprintf(w, "data: %s\n\n", routeEvt)
-			fmt.Fprintf(w, "data: %s\n\n", mustJSON(map[string]string{"token": msg}))
+			fmt.Fprintf(w, "data: %s\n\n", errorEvent("openrouter", resp.StatusCode, summarizeProviderError(resp.StatusCode, detail)))
 			fmt.Fprintf(w, "data: [DONE]\n\n")
 			return false
 		})

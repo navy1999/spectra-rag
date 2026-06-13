@@ -34,36 +34,38 @@ export function InputBar({ onSend, disabled }: Props) {
   };
 
   return (
-    <div className="border-t border-border bg-offwhite px-4 py-3">
-      <div className="max-w-3xl mx-auto">
-        <div className="flex items-end gap-2 bg-white border border-border rounded-xl shadow-sm px-3 py-2">
+    <div className="border-t border-border bg-canvas px-4 py-3">
+      <div className="mx-auto max-w-3xl">
+        <div className="flex items-end gap-2 rounded-xl border border-border bg-panel px-3 py-2 shadow-sm transition-colors focus-within:border-zinc-400">
           <textarea
             ref={textareaRef}
             value={text}
-            onChange={(e) => { setText(e.target.value); handleInput(); }}
+            onChange={(e) => {
+              setText(e.target.value);
+              handleInput();
+            }}
             onKeyDown={handleKeyDown}
             rows={1}
-            placeholder="Ask anything…"
+            placeholder="Query the knowledge graph…"
             disabled={disabled}
-            className="flex-1 resize-none bg-transparent text-sm text-accent placeholder-muted outline-none leading-relaxed max-h-[200px] overflow-y-auto"
+            className="max-h-[200px] flex-1 resize-none overflow-y-auto bg-transparent text-sm leading-relaxed text-accent outline-none placeholder:text-zinc-400"
           />
-          <div className="flex items-center gap-2 shrink-0 pb-0.5">
-            {text && (
-              <span className="text-xs text-muted tabular-nums">{tokenEstimate}t</span>
-            )}
+          <div className="flex shrink-0 items-center gap-2 pb-0.5">
+            {text && <span className="font-mono text-[11px] tabular-nums text-zinc-400">~{tokenEstimate}t</span>}
             <button
               onClick={submit}
               disabled={!text.trim() || disabled}
-              className="w-8 h-8 flex items-center justify-center rounded-lg bg-accent text-white disabled:opacity-30 hover:bg-zinc-800 transition-colors"
+              className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-white transition-colors hover:bg-zinc-800 disabled:opacity-30"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <line x1="12" y1="19" x2="12" y2="5" /><polyline points="5 12 12 5 19 12" />
+                <line x1="12" y1="19" x2="12" y2="5" />
+                <polyline points="5 12 12 5 19 12" />
               </svg>
             </button>
           </div>
         </div>
-        <p className="text-center text-xs text-muted mt-1.5">
-          Shift+Enter for newline · Enter to send
+        <p className="mt-1.5 text-center font-mono text-[10px] text-zinc-400">
+          enter to send · shift+enter for newline · routing and retrieval run server-side
         </p>
       </div>
     </div>

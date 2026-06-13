@@ -1,16 +1,15 @@
-import { RouteInfo } from "./types";
+import { RouteInfo, SpectraMode, Diagnostic } from "./types";
 
 export interface StreamCallbacks {
   onChunk: (text: string) => void;
   onRouteInfo: (info: RouteInfo) => void;
+  onStatus: (mode: SpectraMode) => void;
+  onDiagnostic: (diag: Diagnostic) => void;
   onDone: () => void;
   onError: (err: Error) => void;
 }
 
-export async function sendMessage(
-  query: string,
-  callbacks: StreamCallbacks
-): Promise<void> {
+export async function sendMessage(query: string, callbacks: StreamCallbacks): Promise<void> {
   try {
     const res = await fetch("/api/chat", {
       method: "POST",
@@ -19,6 +18,9 @@ export async function sendMessage(
     });
 
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    const mode = (res.headers.get("X-Spectra-Mode") as SpectraMode) ?? "pipeline";
+    callbacks.onStatus(mode);
 
     const routePath = res.headers.get("X-Route-Path") ?? "chat";
     const hopCount = parseInt(res.headers.get("X-Hop-Count") ?? "0");
@@ -34,7 +36,7 @@ export async function sendMessage(
       temperature: 0,
       hallucinationInterceptions: 0,
     };
-    callbacks.onRouteInfo(routeInfo);
+    if (mode === "pipeline") callbacks.onRouteInfo(routeInfo);
 
     const reader = res.body?.getReader();
     if (!reader) throw new Error("No response body");
@@ -48,38 +50,60 @@ export async function sendMessage(
       const lines = buffer.split("\n");
       buffer = lines.pop() ?? "";
       for (const line of lines) {
-        if (line.startsWith("data: ")) {
-          const data = line.slice(6).trim();
-          if (data === "[DONE]") { callbacks.onDone(); return; }
-          try {
-            const parsed = JSON.parse(data);
-            if (parsed.token) {
-              callbacks.onChunk(parsed.token);
-            } else if (parsed.route) {
-              const r = parsed.route;
-              routeInfo.path = r.path === "agentic" ? "agentic" : "chat";
-              routeInfo.regime = r.regime;
-              routeInfo.confidence = r.confidence;
-              routeInfo.temperature = r.temperature ?? 0;
-              routeInfo.pcaX = r.x;
-              routeInfo.pcaY = r.y;
-              routeInfo.distance = r.distance;
-              routeInfo.hops = r.hops ?? routeInfo.hops;
-              routeInfo.chunks = r.chunks;
-              routeInfo.freqPenalty = r.freqPenalty;
-              routeInfo.centroids = r.centroids;
-              callbacks.onRouteInfo({ ...routeInfo });
-            } else if (parsed.meta) {
-              if (typeof parsed.meta.latencyMs === "number") routeInfo.latencyMs = parsed.meta.latencyMs;
-              if (typeof parsed.meta.interceptions === "number") routeInfo.hallucinationInterceptions = parsed.meta.interceptions;
-              callbacks.onRouteInfo({ ...routeInfo });
-            }
-          } catch { callbacks.onChunk(data); }
+        if (!line.startsWith("data: ")) continue;
+        const data = line.slice(6).trim();
+        if (data === "[DONE]") {
+          callbacks.onDone();
+          return;
+        }
+        try {
+          const parsed = JSON.parse(data);
+          if (parsed.token) {
+            callbacks.onChunk(parsed.token);
+          } else if (parsed.route) {
+            const r = parsed.route;
+            routeInfo.path = r.path === "agentic" ? "agentic" : "chat";
+            routeInfo.regime = r.regime;
+            routeInfo.confidence = r.confidence;
+            routeInfo.temperature = r.temperature ?? 0;
+            routeInfo.pcaX = r.x;
+            routeInfo.pcaY = r.y;
+            routeInfo.distance = r.distance;
+            routeInfo.hops = r.hops ?? routeInfo.hops;
+            routeInfo.chunks = r.chunks;
+            routeInfo.freqPenalty = r.freqPenalty;
+            routeInfo.centroids = r.centroids;
+            callbacks.onRouteInfo({ ...routeInfo });
+          } else if (parsed.meta) {
+            if (typeof parsed.meta.latencyMs === "number") routeInfo.latencyMs = parsed.meta.latencyMs;
+            if (typeof parsed.meta.interceptions === "number")
+              routeInfo.hallucinationInterceptions = parsed.meta.interceptions;
+            callbacks.onRouteInfo({ ...routeInfo });
+          } else if (parsed.error) {
+            callbacks.onDiagnostic({
+              level: "error",
+              stage: parsed.error.stage,
+              code: parsed.error.code,
+              message: parsed.error.message ?? "Request failed.",
+            });
+          } else if (parsed.system) {
+            if (parsed.system.mode) callbacks.onStatus(parsed.system.mode as SpectraMode);
+            if (parsed.system.message)
+              callbacks.onDiagnostic({ level: "warn", stage: "system", message: parsed.system.message });
+          }
+        } catch {
+          // A line that isn't valid JSON is a keepalive or partial; ignore it
+          // instead of dumping raw text into the answer.
         }
       }
     }
     callbacks.onDone();
   } catch (err) {
+    callbacks.onDiagnostic({
+      level: "error",
+      stage: "transport",
+      message: err instanceof Error ? err.message : String(err),
+    });
     callbacks.onError(err instanceof Error ? err : new Error(String(err)));
   }
 }

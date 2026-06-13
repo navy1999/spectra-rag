@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const mono = JetBrains_Mono({ subsets: ["latin"], variable: "--font-mono" });
 
 export const metadata: Metadata = {
-  title: "spectra-rag",
-  description: "Hybrid RAG system with PCA routing and GraphRAG",
+  title: "spectra-rag · LLM control plane",
+  description:
+    "Hybrid RAG that reconstructs free-tier LLM control surfaces (logit_bias, logprobs, frequency_penalty) and exposes every routing and retrieval decision.",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} antialiased`}>{children}</body>
+      <body className={`${inter.variable} ${mono.variable} font-sans antialiased`}>{children}</body>
     </html>
   );
 }
