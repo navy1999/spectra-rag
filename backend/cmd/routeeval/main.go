@@ -43,7 +43,7 @@ func main() {
 	if err := pcacgo.LoadModel(cfg.PCAModelPath); err != nil {
 		fmt.Fprintf(os.Stderr, "[routeeval] PCA model not loaded (%v) — PCA row will use the dev sketch\n", err)
 	}
-	emb := retrieval.NewEmbedder(cfg.EmbeddingsAPIKey, cfg.EmbeddingsBaseURL, cfg.EmbeddingsModel)
+	emb := retrieval.NewEmbedderWithTask(cfg.EmbeddingsAPIKey, cfg.EmbeddingsBaseURL, cfg.EmbeddingsModel, cfg.EmbeddingsTask)
 	pcaReal := !emb.Mock()
 	if !pcaReal {
 		fmt.Fprintln(os.Stderr, "[routeeval] WARNING: no EMBEDDINGS_API_KEY — the pca row is NOT meaningful (mock embeddings). Set it to evaluate the real router.")
@@ -65,7 +65,10 @@ func main() {
 	}
 
 	fmt.Fprintf(os.Stderr, "[routeeval] %d questions · embeddings=%s · pcaReal=%v\n", len(ds.Questions), cfg.EmbeddingsModel, pcaReal)
-	results, err := eval.RunRouting(ds, emb, pcaRouter, graph, *lenThreshold, *hitThreshold)
+	// Label the learned-router row by the fitter that produced the loaded model
+	// (e.g. "pca" or "pca16_lda"), so the report reflects the real projection.
+	routerName := pcacgo.LoadedMethod()
+	results, err := eval.RunRouting(ds, emb, pcaRouter, graph, *lenThreshold, *hitThreshold, routerName)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "run routing eval: %v\n", err)
 		os.Exit(1)

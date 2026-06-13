@@ -68,13 +68,16 @@ type RoutingResult struct {
 // The embedder/pcaRouter are used only for the PCA path; embErr surfaces if
 // embeddings fail (e.g. no key) so the caller can flag that the PCA row is not
 // meaningful.
-func RunRouting(ds *RoutingDataset, emb *retrieval.Embedder, pcaRouter *router.PCARouter, g *retrieval.Graph, lenThreshold, hitThreshold int) ([]RoutingResult, error) {
+func RunRouting(ds *RoutingDataset, emb *retrieval.Embedder, pcaRouter *router.PCARouter, g *retrieval.Graph, lenThreshold, hitThreshold int, routerName string) ([]RoutingResult, error) {
+	if routerName == "" {
+		routerName = "pca"
+	}
 	type router2 struct {
 		name   string
 		decide func(q string) (string, error)
 	}
 	routers := []router2{
-		{"pca", func(q string) (string, error) {
+		{routerName, func(q string) (string, error) {
 			v, err := emb.Embed(q)
 			if err != nil {
 				return "", err
@@ -132,6 +135,6 @@ func RoutingReport(results []RoutingResult, ds *RoutingDataset, pcaReal bool) st
 	for _, r := range results {
 		fmt.Fprintf(&b, "| %s | %.0f%% | %.0f%% |\n", r.Router, r.Accuracy*100, r.AgenticRate*100)
 	}
-	fmt.Fprintf(&b, "\nA router earns its complexity only if it beats `length`/`hit_count` and the `always_*` baselines. If a one-liner ties `pca`, that is a real finding (simplify).\n")
+	fmt.Fprintf(&b, "\nA router earns its complexity only if it beats `length`/`hit_count` and the `always_*` baselines. If a one-liner ties the learned router, that is a real finding (simplify).\n")
 	return b.String()
 }

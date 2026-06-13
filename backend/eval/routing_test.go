@@ -60,7 +60,7 @@ func TestRunRouting_Baselines(t *testing.T) {
 	}}
 	// Use a nil embedder but the PCA router won't be exercised because we only
 	// read the always_* results here.
-	results, err := RunRouting(ds, retrieval.NewEmbedder("", "", ""), mustRouter(t), g, 8, 2)
+	results, err := RunRouting(ds, retrieval.NewEmbedder("", "", ""), mustRouter(t), g, 8, 2, "pca")
 	if err != nil {
 		t.Fatalf("RunRouting: %v", err)
 	}

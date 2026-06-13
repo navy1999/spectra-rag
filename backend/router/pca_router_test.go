@@ -164,6 +164,40 @@ func TestNewPCARouter_LoadsCentroidFile(t *testing.T) {
 	}
 }
 
+// TestRouteByRegime covers the supervised-LDA routing mode: the chat-vs-agentic
+// decision follows the NEAREST class centroid, not the novelty ramp. With two
+// class-mean centroids, a point on the chat side routes chat and a point on the
+// agentic side routes agentic — even though both sit close to a centroid (high
+// confidence), which under the default novelty mode would route both to chat.
+func TestRouteByRegime(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "lda_centroids.json")
+	body := `{"centroids":{"logic":[-0.5,0.0],"creative":[0.5,0.0]},"dist_near":0.2,"dist_far":0.6,"route_by_regime":true,"chat_regime":"logic"}`
+	if err := os.WriteFile(path, []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	r, err := NewPCARouter(path)
+	if err != nil {
+		t.Fatalf("NewPCARouter: %v", err)
+	}
+	if !r.routeByRegime || r.chatRegime != "logic" {
+		t.Fatalf("routeByRegime=%v chatRegime=%q, want true/logic", r.routeByRegime, r.chatRegime)
+	}
+
+	// Near the chat (logic) centroid → chat, despite high confidence.
+	chatSide := r.decide([2]float64{-0.45, 0.02})
+	if chatSide.Regime != "logic" || chatSide.Path != PathChat {
+		t.Errorf("chat side: regime=%q path=%s, want logic/chat", chatSide.Regime, chatSide.Path)
+	}
+
+	// Near the agentic (creative) centroid → agentic, even though it is close to
+	// that centroid (high confidence) — the default novelty mode would call this
+	// chat. This is exactly the separation the supervised projection buys.
+	agenticSide := r.decide([2]float64{0.45, -0.02})
+	if agenticSide.Regime != "creative" || agenticSide.Path != PathAgentic {
+		t.Errorf("agentic side: regime=%q path=%s, want creative/agentic", agenticSide.Regime, agenticSide.Path)
+	}
+}
+
 func BenchmarkRoute(b *testing.B) {
 	r := defaultRouter(b)
 	emb := make([]float32, 384)

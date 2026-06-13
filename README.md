@@ -10,7 +10,7 @@
 
 Free LLM endpoints give you a token stream and not much else: no token biasing, no log-probabilities, no repetition penalty. This project does two things about that. First, it recovers each missing control in application code. Second, it uses those controls to improve answer quality from small free models, the kind that need the most help: answers grounded in a knowledge graph, entity names spelled the way the corpus spells them, and less repetition when the retrieved context is redundant.
 
-The quality improvement is measured: on a 22-question graph-grounded ablation, the spectra layers raise entity exact-spelling to 81.4% (from 73.5% raw / 79.2% plain RAG) and cut repetition, while a separate routing eval honestly reports where the PCA router does *not* yet beat a trivial baseline. See [Evaluation](#evaluation-phase-1) for the full tables and findings.
+The quality improvement is measured: on a 22-question graph-grounded ablation, the spectra layers raise entity exact-spelling to 81.4% (from 73.5% raw / 79.2% plain RAG) and cut repetition. The router is measured too: a supervised PCA→LDA projection routes chat-vs-agentic at 95% in-sample / 85% leave-one-out accuracy, beating every length and count baseline (best baseline 70%). See [Evaluation](#evaluation-phase-1) for the full tables and findings.
 
 The stack is Next.js, Go/Gin, and an optional C++ PCA engine linked over cgo, with GraphRAG-style retrieval over a JSON knowledge graph.
 
@@ -22,7 +22,7 @@ flowchart TD
     FE --> BE[Go Backend / Gin]
     BE --> EMB[Embedder\nJina embeddings, or hash mock]
     EMB --> PCA[PCA Projection\npure-Go matvec from fitted model, or C++/Eigen via cgo]
-    PCA --> ROUTER[PCA Router\nargmin regime + min-dist confidence]
+    PCA --> ROUTER[Router\nPCA->LDA projection, nearest-centroid regime + min-dist confidence]
     ROUTER -->|familiar: confidence >= 0.5| CHAT[Direct Chat path]
     ROUTER -->|novel: confidence < 0.5| AGENT[Agent Loop\nkeyword seed to BFS hop expansion]
     AGENT --> EVAL[3-Persona Letter-Vote Evaluator\nmajority A/B/C]
@@ -46,6 +46,10 @@ Each one substitutes for an LLM API feature the free tier withholds.
 
 ## Pipeline inspector
 
+![Pipeline inspector demo: a query routes through the projection space and lights up each stage of the pipeline](docs/pipeline-inspector.gif)
+
+*An agentic query (“Compare BERT and GPT-3 pretraining”) projected into the routing space, routed to the creative regime, expanded one hop over the graph for 2 chunks, and streamed back — with every stage's decision surfaced live. Recorded with `MOCK_LLM=true`, so the full pipeline runs and only the final answer text is synthetic.*
+
 A panel next to the chat shows what happened on each query:
 
 - a 2D map of the routing space, with the regime centroids, the point where the query landed, and a line to the winning centroid
@@ -61,12 +65,12 @@ This is a demonstrator, not a production system. Status of each piece:
 | Component | Status | Notes |
 |-----------|--------|-------|
 | GraphRAG retrieval | Working | Keyword-scored seeding plus BFS hop expansion over the knowledge graph |
-| PCA Router (Alg 1) | Working (needs fitted model + real embeddings to be semantic) | Argmin centroid gives regime and base temperature, distance gives confidence and path. The pure-Go build does real PCA (`components·(x−mean)`) from `data/pca_model.json` — no cgo needed; the Eigen/cgo path is an optional fast path. Without a fitted model whose dimension matches the embeddings, projection falls back to a non-semantic dev sketch |
+| Router (Alg 1) | Working, supervised | Default model is a fitted **PCA(16)→LDA** projection (`method: pca16_lda`) that separates chat-vs-agentic at 95% in-sample / 85% LOOCV. The argmin centroid gives the regime; in regime-routing mode the nearest class centroid sets the path directly. The pure-Go build does the real matvec (`components·(x−mean)`) from `data/pca_model.json` — no cgo needed; the Eigen/cgo path is an optional fast path. An unsupervised PCA model is kept at `data/pca_model.unsupervised.json` for comparison |
 | Trie Interceptor (Alg 2) | Working | Per-word and ASCII-oriented; corrects single-word near-misses, not multi-word phrases |
 | SVD Penalty (Alg 3) | Working, heuristic | Free models reject the `frequency_penalty` parameter, so the score becomes a prompt instruction rather than a logit-level penalty |
 | Letter-Vote Evaluator (Alg 4) | Working | Needs a live `OPENROUTER_API_KEY`; the voters use different personas and temperatures so they can disagree |
 | Embeddings | Real with a key | Jina (`EMBEDDINGS_API_KEY`, default `jina-embeddings-v3`); OpenRouter does not serve embeddings. Without a key it uses a deterministic hash mock for offline boot, and the server logs that routing is non-semantic |
-| Knowledge graph | Demo scale | 17 curated nodes (5 papers, 5 authors, 4 topics, 3 institutions); the Python pipeline can regenerate and expand it |
+| Knowledge graph | Ingested from arXiv | 282 nodes / 288 edges (50 papers, 220 authors, 7 topics, 5 institutions), built by the Python pipeline from 50 foundational ML/NLP arXiv papers; papers are the well-connected hubs (authored + about edges). Re-runnable to swap or grow the corpus |
 | Answer-quality eval | Measured | Phase 1 ablation run on 22 questions: spectra layers raise entity exact-spelling (81.4%) and distinct-2 (0.939) and groundedness (87.5%) over plain RAG. See [Results](#results) |
 
 ## Benchmarks
@@ -75,7 +79,7 @@ Pure-Go algorithm micro-benchmarks (no network), `go test -bench`. Machine: Inte
 
 | Operation | Time/op | Allocs/op |
 |-----------|---------|-----------|
-| Keyword seed match (17-node graph) | ~25 µs | 78 |
+| Keyword seed match (benchmark fixture graph) | ~25 µs | 78 |
 | BFS 3-hop expansion | ~1.9 µs | 5 |
 | PCA route (project, argmin, policy) | ~0.7 µs | 1 |
 | SVD redundancy penalty (5 chunks) | ~109 µs | 108 |
@@ -132,19 +136,27 @@ cd backend
 EMBEDDINGS_API_KEY=jina_... go run ./cmd/routeeval
 ```
 
-It compares `pca` against `length` (route by query length), `hit_count` (route by graph keyword hits), and the `always_chat`/`always_agentic` baselines, reporting routing accuracy + an agentic-rate cost proxy. The bar is real: on the shipped 16-question set the `length` one-liner already scores ~75%, so the PCA router has to clear that to justify its complexity. If it doesn't, that's a legitimate finding — simplify, or fit a supervised projection (LDA) on labeled queries.
+It compares the learned router against `length` (route by query length), `hit_count` (route by graph keyword hits), and the `always_chat`/`always_agentic` baselines, reporting routing accuracy + an agentic-rate cost proxy. A learned router earns its complexity only if it clears those one-liners.
 
-**Result (real Jina embeddings + fitted model):**
+**Result (real Jina embeddings + fitted supervised model, 40-question set):**
 
 | Router | Routing accuracy | Agentic-rate |
 |---|---|---|
-| pca | 69% | 56% |
-| length | **75%** | 25% |
-| hit_count | 69% | 56% |
+| `pca16_lda` (supervised) | **95%** | 50% |
+| length | 52% | 42% |
+| hit_count | 65% | 65% |
 | always_agentic | 50% | 100% |
 | always_chat | 50% | 0% |
 
-**Finding (reported honestly):** on this 16-question set the PCA router (69%) does **not** beat the trivial `length` one-liner (75%), and routes agentic more than twice as often (56% vs 25% — a higher cost). The unsupervised 2-component PCA projection is too coarse to separate chat-vs-agentic intent better than query length here. The intended next step is a **supervised projection (LDA)** fit on labeled queries, and a larger labeled routing set; until then, `length` is the honest baseline to beat. Reporting a negative result is deliberate — it is a stronger signal of rigor than a cherry-picked win.
+The table above is in-sample (the eval scores on the same labeled set the projection was fit on). The honest generalization estimate is **85% leave-one-out cross-validation** (`scripts/fit_lda.py` reports it on every fit) — still well above the 52% `length` baseline.
+
+**How this got here (the interesting part).** The first version of this eval was a *negative* result, kept here because the path to fixing it is the actual engineering:
+
+1. **Unsupervised PCA lost to a one-liner.** On the original 16-question set, the 2-component PCA router scored 69% and the trivial `length` heuristic scored 75%. PCA maximizes *variance*, which on a homogeneous paper corpus is dominated by topic, not by the chat-vs-agentic distinction the router actually needs.
+2. **The dataset was the real bug.** Inspecting it showed every `chat` question had ≤5 words and every `agentic` one had ≥8 — the labels were *perfectly separable by word count*, so no embedding-based router could ever beat `length`; the task was secretly a length task. The set was rebuilt to 40 questions that **decouple intent from length** (long verbose definitional questions labeled `chat`; short terse relational questions labeled `agentic`), dropping the best possible length-threshold accuracy to ~70%.
+3. **Supervised, but honestly cross-validated.** A supervised **LDA** projection replaces PCA. Raw LDA on 1024-dim embeddings with ~40 samples overfits completely (in-sample ~100%, leave-one-out ~chance), so the fitter reduces with **PCA→LDA** (k=16, chosen by a leave-one-out sweep) and embeds queries with Jina v3's **`classification` task adapter**. Both stages are linear, so the whole pipeline folds into the same `components·(x−mean)` projection the Go router already runs — **zero runtime changes**, just a different fitted `data/*_model.json`. Final: 95% in-sample / **85% LOOCV**, beating every baseline.
+
+The lesson — *a model can only be as good as the labels let it be, and in-sample accuracy on a supervised model is meaningless without cross-validation* — is the kind of finding that's worth more than a cherry-picked win. Fit it yourself with `EMBEDDINGS_API_KEY=jina_... go run ./cmd/embeddump` then `python scripts/fit_lda.py --embeddings data/routing_embeddings.json`.
 
 ## Quick start (Docker, no API key needed)
 
@@ -192,22 +204,35 @@ cmake -B build && cmake --build build && ctest --test-dir build
 
 CI (`.github/workflows/ci.yml`) runs the Go suite (with `-race`), the Next.js build, and the C++ `ctest` on every push and PR.
 
-## Making the router real (embeddings + fitted PCA)
+## Making the router real (embeddings + fitted model)
 
-The PCA router only carries a real signal when two things are true: queries are turned into **real embeddings**, and they're projected through a **fitted PCA model of the same dimension**. Otherwise the backend logs a warning and routes on a non-semantic dev sketch.
+The router only carries a real signal when two things are true: queries are turned into **real embeddings**, and they're projected through a **fitted model of the same dimension**. Otherwise the backend logs a warning and routes on a non-semantic dev sketch.
 
 1. **Embeddings** — set an embeddings key (OpenRouter does not serve embeddings; Jina's free tier is the default):
    ```bash
    EMBEDDINGS_API_KEY=jina_...          # required for a real signal
    EMBEDDINGS_BASE_URL=https://api.jina.ai/v1   # default
    EMBEDDINGS_MODEL=jina-embeddings-v3          # default (1024-d)
+   EMBEDDINGS_TASK=classification               # default; Jina v3 task adapter that sharpens chat-vs-agentic separation
    ```
-2. **Fitted model** — generate `data/pca_model.json` from the **same** embedder (dimension must match), then commit/deploy it:
+   The `EMBEDDINGS_TASK` adapter matters: switching Jina v3 to its `classification` task adapter is what lifts the routing signal from near-baseline to the 85% LOOCV result. Query embeddings are used **only for routing** (retrieval is graph traversal, not vector search), so the task choice is safe.
+2. **Fitted model** — the default `data/pca_model.json` is a supervised **PCA(16)→LDA** projection. To refit it from labeled routing questions:
    ```bash
-   cd scripts && pip install -r requirements.txt
-   EMBEDDINGS_API_KEY=jina_... python fit_pca.py   # writes data/pca_model.json + pca_centroids.json
+   cd backend && EMBEDDINGS_API_KEY=jina_... \
+     go run ./cmd/embeddump -task classification \
+       -in ../data/routing_questions.json -out ../data/routing_embeddings.json
+   # embeds the labeled set once via the Go embedder (avoids Python TLS issues), then:
+   cd .. && pip install -r scripts/requirements.txt
+   python scripts/fit_lda.py --embeddings data/routing_embeddings.json
+   # writes data/pca_model.json + pca_centroids.json (method: pca16_lda),
+   # reports in-sample and leave-one-out CV accuracy
    ```
+   To regenerate the older unsupervised PCA model instead: `EMBEDDINGS_API_KEY=jina_... python scripts/fit_pca.py`.
 3. **Deploy** — set `EMBEDDINGS_API_KEY` on the backend host (e.g. Railway) so runtime embeddings match the fitted model.
+4. **Evaluate** — score the router against length/count baselines:
+   ```bash
+   cd backend && EMBEDDINGS_API_KEY=jina_... go run ./cmd/routeeval
+   ```
 
 The projection is a plain `components·(x−mean)` matrix multiply in pure Go, so no cgo is required — a `CGO_ENABLED=0` image (the Railway default) does real PCA. The C++/Eigen engine below is an optional faster path, not a requirement.
 
@@ -234,7 +259,7 @@ python ingest.py --skip-fetch # reuse existing data/papers.json
 
 ## Bring your own graph
 
-The corpus is pluggable; the shipped 17-node graph is a demo seed. The graph schema ([`data/graph.example.json`](data/graph.example.json)) is a flat `{nodes, edges}` document, and node `type` is freeform, so you can model any domain:
+The corpus is pluggable; the shipped 282-node graph is built from arXiv but easy to replace. The graph schema ([`data/graph.example.json`](data/graph.example.json)) is a flat `{nodes, edges}` document, and node `type` is freeform, so you can model any domain:
 
 ```json
 {
@@ -276,5 +301,5 @@ If you expose the backend directly to browsers, set `CORS_ALLOWED_ORIGINS` to th
 
 - Free-tier first: every algorithm exists because the free tier omits a control. Some are heuristics. Algorithm 3 in particular steers the model with natural language rather than at the logit level.
 - Boots with no dependencies: `data/graph.json` loads at startup. No Python, database, or C++ build is needed to run; the PCA model and real embeddings are optional upgrades.
-- Demo-scale graph: retrieval quality is bounded by the 17-node graph. The ideas generalize, but the corpus is small on purpose.
+- Bounded corpus: retrieval quality is bounded by the 282-node graph of 50 foundational papers. The graph is also author-heavy (most authors connect to a single paper), so cross-paper reasoning rests mainly on shared topics; broadening it means ingesting more papers and richer relation extraction.
 - Post-stream metrics ride the SSE stream: latency and correction counts arrive in a trailing `meta` event, since headers are already flushed once streaming starts.

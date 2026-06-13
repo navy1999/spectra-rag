@@ -18,6 +18,7 @@ npm-debug.log*
 
 # Go build artifacts
 backend/spectra-rag-backend
+backend/embeddump
 *.exe
 
 # C++ build output
@@ -39,3 +40,5 @@ eval_cache.json
 **/eval_cache.json
 data/eval_results.json
 data/routing_results.json
+# Intermediate embedding dump (duplicate of data/routing_embeddings.json, which is committed)
+data/routing_emb_classification.json

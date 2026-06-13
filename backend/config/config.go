@@ -32,6 +32,12 @@ type Config struct {
 	EmbeddingsBaseURL string
 	EmbeddingsModel   string
 	EmbeddingsAPIKey  string
+	// EmbeddingsTask is an optional Jina v3 task adapter sent on every embedding
+	// request (default "classification"). The query embedding is used ONLY for
+	// routing, and the supervised LDA router is fitted on classification-task
+	// embeddings — pinning the same task here keeps the live router consistent
+	// with the fitted projection. Set to empty to disable the task field.
+	EmbeddingsTask string
 }
 
 func Load() *Config {
@@ -52,6 +58,7 @@ func Load() *Config {
 		EmbeddingsBaseURL: getEnv("EMBEDDINGS_BASE_URL", "https://api.jina.ai/v1"),
 		EmbeddingsModel:   getEnv("EMBEDDINGS_MODEL", "jina-embeddings-v3"),
 		EmbeddingsAPIKey:  getEnv("EMBEDDINGS_API_KEY", ""),
+		EmbeddingsTask:    getEnv("EMBEDDINGS_TASK", "classification"),
 	}
 }
 

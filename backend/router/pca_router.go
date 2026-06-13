@@ -54,6 +54,19 @@ type PCARouter struct {
 	// collapsed the router to always-chat on real embeddings.
 	distNear float64
 	distFar  float64
+	// routeByRegime switches the chat-vs-agentic decision from the novelty/
+	// confidence ramp to the nearest-class-centroid label. This is opt-in via
+	// the centroids file ("route_by_regime": true) and is meant for a SUPERVISED
+	// projection (LDA): when the two centroids are the chat and agentic class
+	// means, "which centroid is nearest" IS the routing decision, and is far more
+	// discriminative than distance-to-nearest (which is small for BOTH classes
+	// near their own mean). The unsupervised PCA path leaves this false and keeps
+	// the original novelty-based behavior unchanged.
+	routeByRegime bool
+	// chatRegime is the centroid name that maps to the chat route when
+	// routeByRegime is on (default "logic"); any other nearest centroid routes
+	// agentic. Lets the fitter name classes without a Go change.
+	chatRegime string
 }
 
 // Policy constants. The agentic path triggers when confidence drops below 0.5.
@@ -91,9 +104,11 @@ func NewPCARouter(centroidsPath string) (*PCARouter, error) {
 
 	// Current schema: {"centroids": {name:[x,y]}, "dist_near": f, "dist_far": f}.
 	var doc struct {
-		Centroids map[string][2]float64 `json:"centroids"`
-		DistNear  *float64              `json:"dist_near"`
-		DistFar   *float64              `json:"dist_far"`
+		Centroids     map[string][2]float64 `json:"centroids"`
+		DistNear      *float64              `json:"dist_near"`
+		DistFar       *float64              `json:"dist_far"`
+		RouteByRegime bool                  `json:"route_by_regime"`
+		ChatRegime    string                `json:"chat_regime"`
 	}
 	if err := json.Unmarshal(data, &doc); err == nil && len(doc.Centroids) > 0 {
 		for name, xy := range doc.Centroids {
@@ -107,6 +122,11 @@ func NewPCARouter(centroidsPath string) (*PCARouter, error) {
 		}
 		if r.distFar <= r.distNear { // guard against a degenerate ramp
 			r.distNear, r.distFar = defaultDistNear, defaultDistFar
+		}
+		r.routeByRegime = doc.RouteByRegime
+		r.chatRegime = doc.ChatRegime
+		if r.chatRegime == "" {
+			r.chatRegime = "logic"
 		}
 		return r, nil
 	}
@@ -157,8 +177,18 @@ func (r *PCARouter) decide(proj [2]float64) *RouteDecision {
 	}
 	temp := math.Min(maxTemp, base+novelty*noveltyTempBoost)
 
+	// Routing decision. Two modes:
+	//  - routeByRegime (supervised LDA): the nearest class centroid IS the route.
+	//    Nearest to the chat-class centroid → chat; anything else → agentic.
+	//  - default (unsupervised PCA): novelty/confidence ramp — a query that sits
+	//    far from ALL known clusters is treated as out-of-distribution and sent
+	//    down the agentic multi-hop path.
 	path := PathChat
-	if confidence < agenticConfidenceCutoff {
+	if r.routeByRegime {
+		if regime != r.chatRegime {
+			path = PathAgentic
+		}
+	} else if confidence < agenticConfidenceCutoff {
 		path = PathAgentic
 	}
 

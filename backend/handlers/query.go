@@ -33,7 +33,7 @@ func New(cfg *config.Config, store *retrieval.Store) *Handler {
 	return &Handler{
 		cfg:      cfg,
 		store:    store,
-		embedder: retrieval.NewEmbedder(cfg.EmbeddingsAPIKey, cfg.EmbeddingsBaseURL, cfg.EmbeddingsModel),
+		embedder: retrieval.NewEmbedderWithTask(cfg.EmbeddingsAPIKey, cfg.EmbeddingsBaseURL, cfg.EmbeddingsModel, cfg.EmbeddingsTask),
 		router:   pcaRouter,
 	}
 }

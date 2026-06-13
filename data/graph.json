@@ -1,39 +1,3338 @@
 {
   "nodes": [
-    {"id": "p1", "type": "paper", "name": "Attention Is All You Need", "props": {"year": 2017, "arxiv": "1706.03762"}},
-    {"id": "p2", "type": "paper", "name": "BERT: Pre-training of Deep Bidirectional Transformers", "props": {"year": 2018, "arxiv": "1810.04805"}},
-    {"id": "p3", "type": "paper", "name": "GPT-3: Language Models are Few-Shot Learners", "props": {"year": 2020, "arxiv": "2005.14165"}},
-    {"id": "p4", "type": "paper", "name": "LoRA: Low-Rank Adaptation of Large Language Models", "props": {"year": 2021, "arxiv": "2106.09685"}},
-    {"id": "p5", "type": "paper", "name": "FlashAttention: Fast and Memory-Efficient Exact Attention", "props": {"year": 2022, "arxiv": "2205.14135"}},
-    {"id": "a1", "type": "author", "name": "Ashish Vaswani", "props": {}},
-    {"id": "a2", "type": "author", "name": "Jacob Devlin", "props": {}},
-    {"id": "a3", "type": "author", "name": "Tom Brown", "props": {}},
-    {"id": "a4", "type": "author", "name": "Edward Hu", "props": {}},
-    {"id": "a5", "type": "author", "name": "Tri Dao", "props": {}},
-    {"id": "t1", "type": "topic", "name": "Transformer Architecture"},
-    {"id": "t2", "type": "topic", "name": "Pre-training"},
-    {"id": "t3", "type": "topic", "name": "Parameter-Efficient Fine-Tuning"},
-    {"id": "t4", "type": "topic", "name": "Efficient Attention"},
-    {"id": "i1", "type": "institution", "name": "Google Brain"},
-    {"id": "i2", "type": "institution", "name": "OpenAI"},
-    {"id": "i3", "type": "institution", "name": "Stanford University"}
+    {
+      "id": "p_1706_03762",
+      "type": "paper",
+      "name": "Attention Is All You Need",
+      "props": {
+        "year": 2017,
+        "arxiv": "1706.03762",
+        "abstract": "The dominant sequence transduction models are based on complex recurrent or convolutional neural networks in an encoder-decoder configuration. The best performing models also connect the encoder and d"
+      }
+    },
+    {
+      "id": "a_0",
+      "type": "author",
+      "name": "Ashish Vaswani",
+      "props": {}
+    },
+    {
+      "id": "i_0",
+      "type": "institution",
+      "name": "Google Brain",
+      "props": {}
+    },
+    {
+      "id": "a_1",
+      "type": "author",
+      "name": "Noam Shazeer",
+      "props": {}
+    },
+    {
+      "id": "a_2",
+      "type": "author",
+      "name": "Niki Parmar",
+      "props": {}
+    },
+    {
+      "id": "a_3",
+      "type": "author",
+      "name": "Jakob Uszkoreit",
+      "props": {}
+    },
+    {
+      "id": "a_4",
+      "type": "author",
+      "name": "Llion Jones",
+      "props": {}
+    },
+    {
+      "id": "t_0",
+      "type": "topic",
+      "name": "Transformer Architecture",
+      "props": {}
+    },
+    {
+      "id": "p_1810_04805",
+      "type": "paper",
+      "name": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+      "props": {
+        "year": 2018,
+        "arxiv": "1810.04805",
+        "abstract": "We introduce a new language representation model called BERT, which stands for Bidirectional Encoder Representations from Transformers. Unlike recent language representation models, BERT is designed t"
+      }
+    },
+    {
+      "id": "a_5",
+      "type": "author",
+      "name": "Jacob Devlin",
+      "props": {}
+    },
+    {
+      "id": "i_1",
+      "type": "institution",
+      "name": "Google",
+      "props": {}
+    },
+    {
+      "id": "a_6",
+      "type": "author",
+      "name": "Ming-Wei Chang",
+      "props": {}
+    },
+    {
+      "id": "a_7",
+      "type": "author",
+      "name": "Kenton Lee",
+      "props": {}
+    },
+    {
+      "id": "a_8",
+      "type": "author",
+      "name": "Kristina Toutanova",
+      "props": {}
+    },
+    {
+      "id": "t_1",
+      "type": "topic",
+      "name": "Pre-training",
+      "props": {}
+    },
+    {
+      "id": "t_2",
+      "type": "topic",
+      "name": "Parameter-Efficient Fine-Tuning",
+      "props": {}
+    },
+    {
+      "id": "p_2005_14165",
+      "type": "paper",
+      "name": "Language Models are Few-Shot Learners",
+      "props": {
+        "year": 2020,
+        "arxiv": "2005.14165",
+        "abstract": "Recent work has demonstrated substantial gains on many NLP tasks and benchmarks by pre-training on a large corpus of text followed by fine-tuning on a specific task. While typically task-agnostic in a"
+      }
+    },
+    {
+      "id": "a_9",
+      "type": "author",
+      "name": "Tom B. Brown",
+      "props": {}
+    },
+    {
+      "id": "a_10",
+      "type": "author",
+      "name": "Benjamin Mann",
+      "props": {}
+    },
+    {
+      "id": "a_11",
+      "type": "author",
+      "name": "Nick Ryder",
+      "props": {}
+    },
+    {
+      "id": "a_12",
+      "type": "author",
+      "name": "Melanie Subbiah",
+      "props": {}
+    },
+    {
+      "id": "a_13",
+      "type": "author",
+      "name": "Jared Kaplan",
+      "props": {}
+    },
+    {
+      "id": "t_3",
+      "type": "topic",
+      "name": "In-Context Learning",
+      "props": {}
+    },
+    {
+      "id": "p_2106_09685",
+      "type": "paper",
+      "name": "LoRA: Low-Rank Adaptation of Large Language Models",
+      "props": {
+        "year": 2021,
+        "arxiv": "2106.09685",
+        "abstract": "An important paradigm of natural language processing consists of large-scale pre-training on general domain data and adaptation to particular tasks or domains. As we pre-train larger models, full fine"
+      }
+    },
+    {
+      "id": "a_14",
+      "type": "author",
+      "name": "Edward J. Hu",
+      "props": {}
+    },
+    {
+      "id": "a_15",
+      "type": "author",
+      "name": "Yelong Shen",
+      "props": {}
+    },
+    {
+      "id": "i_2",
+      "type": "institution",
+      "name": "Microsoft Research",
+      "props": {}
+    },
+    {
+      "id": "a_16",
+      "type": "author",
+      "name": "Phillip Wallis",
+      "props": {}
+    },
+    {
+      "id": "a_17",
+      "type": "author",
+      "name": "Zeyuan Allen-Zhu",
+      "props": {}
+    },
+    {
+      "id": "a_18",
+      "type": "author",
+      "name": "Yuanzhi Li",
+      "props": {}
+    },
+    {
+      "id": "p_2205_14135",
+      "type": "paper",
+      "name": "FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness",
+      "props": {
+        "year": 2022,
+        "arxiv": "2205.14135",
+        "abstract": "Transformers are slow and memory-hungry on long sequences, since the time and memory complexity of self-attention are quadratic in sequence length. Approximate attention methods have attempted to addr"
+      }
+    },
+    {
+      "id": "a_19",
+      "type": "author",
+      "name": "Tri Dao",
+      "props": {}
+    },
+    {
+      "id": "i_3",
+      "type": "institution",
+      "name": "Stanford University",
+      "props": {}
+    },
+    {
+      "id": "a_20",
+      "type": "author",
+      "name": "Daniel Y. Fu",
+      "props": {}
+    },
+    {
+      "id": "a_21",
+      "type": "author",
+      "name": "Stefano Ermon",
+      "props": {}
+    },
+    {
+      "id": "a_22",
+      "type": "author",
+      "name": "Atri Rudra",
+      "props": {}
+    },
+    {
+      "id": "a_23",
+      "type": "author",
+      "name": "Christopher R\u00e9",
+      "props": {}
+    },
+    {
+      "id": "t_4",
+      "type": "topic",
+      "name": "Efficient Attention",
+      "props": {}
+    },
+    {
+      "id": "p_1301_3666",
+      "type": "paper",
+      "name": "Zero-Shot Learning Through Cross-Modal Transfer",
+      "props": {
+        "year": 2013,
+        "arxiv": "1301.3666",
+        "abstract": "This work introduces a model that can recognize objects in images even if no training data is available for the objects. The only necessary knowledge about the unseen categories comes from unsupervise"
+      }
+    },
+    {
+      "id": "a_24",
+      "type": "author",
+      "name": "Richard Socher",
+      "props": {}
+    },
+    {
+      "id": "a_25",
+      "type": "author",
+      "name": "Milind Ganjoo",
+      "props": {}
+    },
+    {
+      "id": "a_26",
+      "type": "author",
+      "name": "Hamsa Sridhar",
+      "props": {}
+    },
+    {
+      "id": "a_27",
+      "type": "author",
+      "name": "Osbert Bastani",
+      "props": {}
+    },
+    {
+      "id": "a_28",
+      "type": "author",
+      "name": "Christopher D. Manning",
+      "props": {}
+    },
+    {
+      "id": "p_1607_06450",
+      "type": "paper",
+      "name": "Layer Normalization",
+      "props": {
+        "year": 2016,
+        "arxiv": "1607.06450",
+        "abstract": "Training state-of-the-art, deep neural networks is computationally expensive. One way to reduce the training time is to normalize the activities of the neurons. A recently introduced technique called "
+      }
+    },
+    {
+      "id": "a_29",
+      "type": "author",
+      "name": "Jimmy Lei Ba",
+      "props": {}
+    },
+    {
+      "id": "a_30",
+      "type": "author",
+      "name": "Jamie Ryan Kiros",
+      "props": {}
+    },
+    {
+      "id": "a_31",
+      "type": "author",
+      "name": "Geoffrey E. Hinton",
+      "props": {}
+    },
+    {
+      "id": "p_1512_03385",
+      "type": "paper",
+      "name": "Deep Residual Learning for Image Recognition",
+      "props": {
+        "year": 2015,
+        "arxiv": "1512.03385",
+        "abstract": "Deeper neural networks are more difficult to train. We present a residual learning framework to ease the training of networks that are substantially deeper than those used previously. We explicitly re"
+      }
+    },
+    {
+      "id": "a_32",
+      "type": "author",
+      "name": "Kaiming He",
+      "props": {}
+    },
+    {
+      "id": "a_33",
+      "type": "author",
+      "name": "Xiangyu Zhang",
+      "props": {}
+    },
+    {
+      "id": "a_34",
+      "type": "author",
+      "name": "Shaoqing Ren",
+      "props": {}
+    },
+    {
+      "id": "a_35",
+      "type": "author",
+      "name": "Jian Sun",
+      "props": {}
+    },
+    {
+      "id": "p_2010_11929",
+      "type": "paper",
+      "name": "An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale",
+      "props": {
+        "year": 2020,
+        "arxiv": "2010.11929",
+        "abstract": "While the Transformer architecture has become the de-facto standard for natural language processing tasks, its applications to computer vision remain limited. In vision, attention is either applied in"
+      }
+    },
+    {
+      "id": "a_36",
+      "type": "author",
+      "name": "Alexey Dosovitskiy",
+      "props": {}
+    },
+    {
+      "id": "a_37",
+      "type": "author",
+      "name": "Lucas Beyer",
+      "props": {}
+    },
+    {
+      "id": "a_38",
+      "type": "author",
+      "name": "Alexander Kolesnikov",
+      "props": {}
+    },
+    {
+      "id": "a_39",
+      "type": "author",
+      "name": "Dirk Weissenborn",
+      "props": {}
+    },
+    {
+      "id": "a_40",
+      "type": "author",
+      "name": "Xiaohua Zhai",
+      "props": {}
+    },
+    {
+      "id": "p_2203_15556",
+      "type": "paper",
+      "name": "Training Compute-Optimal Large Language Models",
+      "props": {
+        "year": 2022,
+        "arxiv": "2203.15556",
+        "abstract": "We investigate the optimal model size and number of tokens for training a transformer language model under a given compute budget. We find that current large language models are significantly undertra"
+      }
+    },
+    {
+      "id": "a_41",
+      "type": "author",
+      "name": "Jordan Hoffmann",
+      "props": {}
+    },
+    {
+      "id": "a_42",
+      "type": "author",
+      "name": "Sebastian Borgeaud",
+      "props": {}
+    },
+    {
+      "id": "a_43",
+      "type": "author",
+      "name": "Arthur Mensch",
+      "props": {}
+    },
+    {
+      "id": "a_44",
+      "type": "author",
+      "name": "Elena Buchatskaya",
+      "props": {}
+    },
+    {
+      "id": "a_45",
+      "type": "author",
+      "name": "Trevor Cai",
+      "props": {}
+    },
+    {
+      "id": "p_2302_13971",
+      "type": "paper",
+      "name": "LLaMA: Open and Efficient Foundation Language Models",
+      "props": {
+        "year": 2023,
+        "arxiv": "2302.13971",
+        "abstract": "We introduce LLaMA, a collection of foundation language models ranging from 7B to 65B parameters. We train our models on trillions of tokens, and show that it is possible to train state-of-the-art mod"
+      }
+    },
+    {
+      "id": "a_46",
+      "type": "author",
+      "name": "Hugo Touvron",
+      "props": {}
+    },
+    {
+      "id": "i_4",
+      "type": "institution",
+      "name": "Meta AI",
+      "props": {}
+    },
+    {
+      "id": "a_47",
+      "type": "author",
+      "name": "Thibaut Lavril",
+      "props": {}
+    },
+    {
+      "id": "a_48",
+      "type": "author",
+      "name": "Gautier Izacard",
+      "props": {}
+    },
+    {
+      "id": "a_49",
+      "type": "author",
+      "name": "Xavier Martinet",
+      "props": {}
+    },
+    {
+      "id": "a_50",
+      "type": "author",
+      "name": "Marie-Anne Lachaux",
+      "props": {}
+    },
+    {
+      "id": "p_2310_06825",
+      "type": "paper",
+      "name": "Mistral 7B",
+      "props": {
+        "year": 2023,
+        "arxiv": "2310.06825",
+        "abstract": "We introduce Mistral 7B v0.1, a 7-billion-parameter language model engineered for superior performance and efficiency. Mistral 7B outperforms Llama 2 13B across all evaluated benchmarks, and Llama 1 3"
+      }
+    },
+    {
+      "id": "a_51",
+      "type": "author",
+      "name": "Albert Q. Jiang",
+      "props": {}
+    },
+    {
+      "id": "a_52",
+      "type": "author",
+      "name": "Alexandre Sablayrolles",
+      "props": {}
+    },
+    {
+      "id": "a_53",
+      "type": "author",
+      "name": "Chris Bamford",
+      "props": {}
+    },
+    {
+      "id": "a_54",
+      "type": "author",
+      "name": "Devendra Singh Chaplot",
+      "props": {}
+    },
+    {
+      "id": "t_5",
+      "type": "topic",
+      "name": "Retrieval Augmented Generation",
+      "props": {}
+    },
+    {
+      "id": "p_2307_09288",
+      "type": "paper",
+      "name": "Llama 2: Open Foundation and Fine-Tuned Chat Models",
+      "props": {
+        "year": 2023,
+        "arxiv": "2307.09288",
+        "abstract": "In this work, we develop and release Llama 2, a collection of pretrained and fine-tuned large language models (LLMs) ranging in scale from 7 billion to 70 billion parameters. Our fine-tuned LLMs, call"
+      }
+    },
+    {
+      "id": "a_55",
+      "type": "author",
+      "name": "Louis Martin",
+      "props": {}
+    },
+    {
+      "id": "a_56",
+      "type": "author",
+      "name": "Kevin Stone",
+      "props": {}
+    },
+    {
+      "id": "a_57",
+      "type": "author",
+      "name": "Peter Albert",
+      "props": {}
+    },
+    {
+      "id": "a_58",
+      "type": "author",
+      "name": "Amjad Almahairi",
+      "props": {}
+    },
+    {
+      "id": "p_2210_11610",
+      "type": "paper",
+      "name": "Large Language Models Can Self-Improve",
+      "props": {
+        "year": 2022,
+        "arxiv": "2210.11610",
+        "abstract": "Large Language Models (LLMs) have achieved excellent performances in various tasks. However, fine-tuning an LLM requires extensive supervision. Human, on the other hand, may improve their reasoning ab"
+      }
+    },
+    {
+      "id": "a_59",
+      "type": "author",
+      "name": "Jiaxin Huang",
+      "props": {}
+    },
+    {
+      "id": "a_60",
+      "type": "author",
+      "name": "Shixiang Shane Gu",
+      "props": {}
+    },
+    {
+      "id": "a_61",
+      "type": "author",
+      "name": "Le Hou",
+      "props": {}
+    },
+    {
+      "id": "a_62",
+      "type": "author",
+      "name": "Yuexin Wu",
+      "props": {}
+    },
+    {
+      "id": "a_63",
+      "type": "author",
+      "name": "Xuezhi Wang",
+      "props": {}
+    },
+    {
+      "id": "p_2112_10752",
+      "type": "paper",
+      "name": "High-Resolution Image Synthesis with Latent Diffusion Models",
+      "props": {
+        "year": 2021,
+        "arxiv": "2112.10752",
+        "abstract": "By decomposing the image formation process into a sequential application of denoising autoencoders, diffusion models (DMs) achieve state-of-the-art synthesis results on image data and beyond. Addition"
+      }
+    },
+    {
+      "id": "a_64",
+      "type": "author",
+      "name": "Robin Rombach",
+      "props": {}
+    },
+    {
+      "id": "a_65",
+      "type": "author",
+      "name": "Andreas Blattmann",
+      "props": {}
+    },
+    {
+      "id": "a_66",
+      "type": "author",
+      "name": "Dominik Lorenz",
+      "props": {}
+    },
+    {
+      "id": "a_67",
+      "type": "author",
+      "name": "Patrick Esser",
+      "props": {}
+    },
+    {
+      "id": "a_68",
+      "type": "author",
+      "name": "Bj\u00f6rn Ommer",
+      "props": {}
+    },
+    {
+      "id": "p_1910_10683",
+      "type": "paper",
+      "name": "Exploring the Limits of Transfer Learning with a Unified Text-to-Text Transformer",
+      "props": {
+        "year": 2019,
+        "arxiv": "1910.10683",
+        "abstract": "Transfer learning, where a model is first pre-trained on a data-rich task before being fine-tuned on a downstream task, has emerged as a powerful technique in natural language processing (NLP). The ef"
+      }
+    },
+    {
+      "id": "a_69",
+      "type": "author",
+      "name": "Colin Raffel",
+      "props": {}
+    },
+    {
+      "id": "a_70",
+      "type": "author",
+      "name": "Adam Roberts",
+      "props": {}
+    },
+    {
+      "id": "a_71",
+      "type": "author",
+      "name": "Katherine Lee",
+      "props": {}
+    },
+    {
+      "id": "a_72",
+      "type": "author",
+      "name": "Sharan Narang",
+      "props": {}
+    },
+    {
+      "id": "p_2103_00020",
+      "type": "paper",
+      "name": "Learning Transferable Visual Models From Natural Language Supervision",
+      "props": {
+        "year": 2021,
+        "arxiv": "2103.00020",
+        "abstract": "State-of-the-art computer vision systems are trained to predict a fixed set of predetermined object categories. This restricted form of supervision limits their generality and usability since addition"
+      }
+    },
+    {
+      "id": "a_73",
+      "type": "author",
+      "name": "Alec Radford",
+      "props": {}
+    },
+    {
+      "id": "a_74",
+      "type": "author",
+      "name": "Jong Wook Kim",
+      "props": {}
+    },
+    {
+      "id": "a_75",
+      "type": "author",
+      "name": "Chris Hallacy",
+      "props": {}
+    },
+    {
+      "id": "a_76",
+      "type": "author",
+      "name": "Aditya Ramesh",
+      "props": {}
+    },
+    {
+      "id": "a_77",
+      "type": "author",
+      "name": "Gabriel Goh",
+      "props": {}
+    },
+    {
+      "id": "p_2204_05149",
+      "type": "paper",
+      "name": "The Carbon Footprint of Machine Learning Training Will Plateau, Then Shrink",
+      "props": {
+        "year": 2022,
+        "arxiv": "2204.05149",
+        "abstract": "Machine Learning (ML) workloads have rapidly grown in importance, but raised concerns about their carbon footprint. Four best practices can reduce ML training energy by up to 100x and CO2 emissions up"
+      }
+    },
+    {
+      "id": "a_78",
+      "type": "author",
+      "name": "David Patterson",
+      "props": {}
+    },
+    {
+      "id": "a_79",
+      "type": "author",
+      "name": "Joseph Gonzalez",
+      "props": {}
+    },
+    {
+      "id": "a_80",
+      "type": "author",
+      "name": "Urs H\u00f6lzle",
+      "props": {}
+    },
+    {
+      "id": "a_81",
+      "type": "author",
+      "name": "Quoc Le",
+      "props": {}
+    },
+    {
+      "id": "a_82",
+      "type": "author",
+      "name": "Chen Liang",
+      "props": {}
+    },
+    {
+      "id": "p_1901_00596",
+      "type": "paper",
+      "name": "A Comprehensive Survey on Graph Neural Networks",
+      "props": {
+        "year": 2019,
+        "arxiv": "1901.00596",
+        "abstract": "Deep learning has revolutionized many machine learning tasks in recent years, ranging from image classification and video processing to speech recognition and natural language understanding. The data "
+      }
+    },
+    {
+      "id": "a_83",
+      "type": "author",
+      "name": "Zonghan Wu",
+      "props": {}
+    },
+    {
+      "id": "a_84",
+      "type": "author",
+      "name": "Shirui Pan",
+      "props": {}
+    },
+    {
+      "id": "a_85",
+      "type": "author",
+      "name": "Fengwen Chen",
+      "props": {}
+    },
+    {
+      "id": "a_86",
+      "type": "author",
+      "name": "Guodong Long",
+      "props": {}
+    },
+    {
+      "id": "a_87",
+      "type": "author",
+      "name": "Chengqi Zhang",
+      "props": {}
+    },
+    {
+      "id": "p_2108_12409",
+      "type": "paper",
+      "name": "Train Short, Test Long: Attention with Linear Biases Enables Input Length Extrapolation",
+      "props": {
+        "year": 2021,
+        "arxiv": "2108.12409",
+        "abstract": "Since the introduction of the transformer model by Vaswani et al. (2017), a fundamental question has yet to be answered: how does a model achieve extrapolation at inference time for sequences that are"
+      }
+    },
+    {
+      "id": "a_88",
+      "type": "author",
+      "name": "Ofir Press",
+      "props": {}
+    },
+    {
+      "id": "a_89",
+      "type": "author",
+      "name": "Noah A. Smith",
+      "props": {}
+    },
+    {
+      "id": "a_90",
+      "type": "author",
+      "name": "Mike Lewis",
+      "props": {}
+    },
+    {
+      "id": "p_2309_02144",
+      "type": "paper",
+      "name": "Making Large Language Models Better Reasoners with Alignment",
+      "props": {
+        "year": 2023,
+        "arxiv": "2309.02144",
+        "abstract": "Reasoning is a cognitive process of using evidence to reach a sound conclusion. The reasoning capability is essential for large language models (LLMs) to serve as the brain of the artificial general i"
+      }
+    },
+    {
+      "id": "a_91",
+      "type": "author",
+      "name": "Peiyi Wang",
+      "props": {}
+    },
+    {
+      "id": "a_92",
+      "type": "author",
+      "name": "Lei Li",
+      "props": {}
+    },
+    {
+      "id": "a_93",
+      "type": "author",
+      "name": "Liang Chen",
+      "props": {}
+    },
+    {
+      "id": "a_94",
+      "type": "author",
+      "name": "Feifan Song",
+      "props": {}
+    },
+    {
+      "id": "a_95",
+      "type": "author",
+      "name": "Binghuai Lin",
+      "props": {}
+    },
+    {
+      "id": "p_2312_10793",
+      "type": "paper",
+      "name": "Demystifying Instruction Mixing for Fine-tuning Large Language Models",
+      "props": {
+        "year": 2023,
+        "arxiv": "2312.10793",
+        "abstract": "Instruction tuning significantly enhances the performance of large language models (LLMs) across various tasks. However, the procedure to optimizing the mixing of instruction datasets for LLM fine-tun"
+      }
+    },
+    {
+      "id": "a_96",
+      "type": "author",
+      "name": "Renxi Wang",
+      "props": {}
+    },
+    {
+      "id": "a_97",
+      "type": "author",
+      "name": "Haonan Li",
+      "props": {}
+    },
+    {
+      "id": "a_98",
+      "type": "author",
+      "name": "Minghao Wu",
+      "props": {}
+    },
+    {
+      "id": "a_99",
+      "type": "author",
+      "name": "Yuxia Wang",
+      "props": {}
+    },
+    {
+      "id": "a_100",
+      "type": "author",
+      "name": "Xudong Han",
+      "props": {}
+    },
+    {
+      "id": "p_2402_11651",
+      "type": "paper",
+      "name": "Learning From Failure: Integrating Negative Examples when Fine-tuning Large Language Models as Agents",
+      "props": {
+        "year": 2024,
+        "arxiv": "2402.11651",
+        "abstract": "Large language models (LLMs) have achieved success in acting as agents, which interact with environments through tools such as search engines. However, LLMs are optimized for language generation inste"
+      }
+    },
+    {
+      "id": "a_101",
+      "type": "author",
+      "name": "Yixuan Zhang",
+      "props": {}
+    },
+    {
+      "id": "a_102",
+      "type": "author",
+      "name": "Timothy Baldwin",
+      "props": {}
+    },
+    {
+      "id": "p_2304_12244",
+      "type": "paper",
+      "name": "WizardLM: Empowering large pre-trained language models to follow complex instructions",
+      "props": {
+        "year": 2023,
+        "arxiv": "2304.12244",
+        "abstract": "Training large language models (LLMs) with open-domain instruction following data brings colossal success. However, manually creating such instruction data is very time-consuming and labor-intensive. "
+      }
+    },
+    {
+      "id": "a_103",
+      "type": "author",
+      "name": "Can Xu",
+      "props": {}
+    },
+    {
+      "id": "a_104",
+      "type": "author",
+      "name": "Qingfeng Sun",
+      "props": {}
+    },
+    {
+      "id": "a_105",
+      "type": "author",
+      "name": "Kai Zheng",
+      "props": {}
+    },
+    {
+      "id": "a_106",
+      "type": "author",
+      "name": "Xiubo Geng",
+      "props": {}
+    },
+    {
+      "id": "a_107",
+      "type": "author",
+      "name": "Pu Zhao",
+      "props": {}
+    },
+    {
+      "id": "p_2310_00034",
+      "type": "paper",
+      "name": "PB-LLM: Partially Binarized Large Language Models",
+      "props": {
+        "year": 2023,
+        "arxiv": "2310.00034",
+        "abstract": "This paper explores network binarization, a radical form of quantization, compressing model weights to a single bit, specifically for Large Language Models (LLMs) compression. Due to previous binariza"
+      }
+    },
+    {
+      "id": "a_108",
+      "type": "author",
+      "name": "Yuzhang Shang",
+      "props": {}
+    },
+    {
+      "id": "a_109",
+      "type": "author",
+      "name": "Zhihang Yuan",
+      "props": {}
+    },
+    {
+      "id": "a_110",
+      "type": "author",
+      "name": "Qiang Wu",
+      "props": {}
+    },
+    {
+      "id": "a_111",
+      "type": "author",
+      "name": "Zhen Dong",
+      "props": {}
+    },
+    {
+      "id": "p_2308_16149",
+      "type": "paper",
+      "name": "Jais and Jais-chat: Arabic-Centric Foundation and Instruction-Tuned Open Generative Large Language Models",
+      "props": {
+        "year": 2023,
+        "arxiv": "2308.16149",
+        "abstract": "We introduce Jais and Jais-chat, new state-of-the-art Arabic-centric foundation and instruction-tuned open generative large language models (LLMs). The models are based on the GPT-3 decoder-only archi"
+      }
+    },
+    {
+      "id": "a_112",
+      "type": "author",
+      "name": "Neha Sengupta",
+      "props": {}
+    },
+    {
+      "id": "a_113",
+      "type": "author",
+      "name": "Sunil Kumar Sahu",
+      "props": {}
+    },
+    {
+      "id": "a_114",
+      "type": "author",
+      "name": "Bokang Jia",
+      "props": {}
+    },
+    {
+      "id": "a_115",
+      "type": "author",
+      "name": "Satheesh Katipomu",
+      "props": {}
+    },
+    {
+      "id": "p_2506_06962",
+      "type": "paper",
+      "name": "AR-RAG: Autoregressive Retrieval Augmentation for Image Generation",
+      "props": {
+        "year": 2025,
+        "arxiv": "2506.06962",
+        "abstract": "We introduce Autoregressive Retrieval Augmentation (AR-RAG), a novel paradigm that enhances image generation by autoregressively incorporating knearest neighbor retrievals at the patch level. Unlike p"
+      }
+    },
+    {
+      "id": "a_116",
+      "type": "author",
+      "name": "Jingyuan Qi",
+      "props": {}
+    },
+    {
+      "id": "a_117",
+      "type": "author",
+      "name": "Zhiyang Xu",
+      "props": {}
+    },
+    {
+      "id": "a_118",
+      "type": "author",
+      "name": "Qifan Wang",
+      "props": {}
+    },
+    {
+      "id": "a_119",
+      "type": "author",
+      "name": "Lifu Huang",
+      "props": {}
+    },
+    {
+      "id": "p_2504_13684",
+      "type": "paper",
+      "name": "Intelligent Interaction Strategies for Context-Aware Cognitive Augmentation",
+      "props": {
+        "year": 2025,
+        "arxiv": "2504.13684",
+        "abstract": "Human cognition is constrained by processing limitations, leading to cognitive overload and inefficiencies in knowledge synthesis and decision-making. Large Language Models (LLMs) present an opportuni"
+      }
+    },
+    {
+      "id": "a_120",
+      "type": "author",
+      "name": " Xiangrong",
+      "props": {}
+    },
+    {
+      "id": "a_121",
+      "type": "author",
+      "name": " Zhu",
+      "props": {}
+    },
+    {
+      "id": "a_122",
+      "type": "author",
+      "name": "Yuan Xu",
+      "props": {}
+    },
+    {
+      "id": "a_123",
+      "type": "author",
+      "name": "Tianjian Liu",
+      "props": {}
+    },
+    {
+      "id": "a_124",
+      "type": "author",
+      "name": "Jingwei Sun",
+      "props": {}
+    },
+    {
+      "id": "p_2504_17204",
+      "type": "paper",
+      "name": "Factually: Exploring Wearable Fact-Checking for Augmented Truth Discernment",
+      "props": {
+        "year": 2025,
+        "arxiv": "2504.17204",
+        "abstract": "Wearable devices are transforming human capabilities by seamlessly augmenting cognitive functions. In this position paper, we propose a voice-based, interactive learning companion designed to amplify "
+      }
+    },
+    {
+      "id": "a_125",
+      "type": "author",
+      "name": "Chitralekha Gupta",
+      "props": {}
+    },
+    {
+      "id": "a_126",
+      "type": "author",
+      "name": "Hanjun Wu",
+      "props": {}
+    },
+    {
+      "id": "a_127",
+      "type": "author",
+      "name": "Praveen Sasikumar",
+      "props": {}
+    },
+    {
+      "id": "a_128",
+      "type": "author",
+      "name": "Shreyas Sridhar",
+      "props": {}
+    },
+    {
+      "id": "a_129",
+      "type": "author",
+      "name": "Priambudi Bagaskara",
+      "props": {}
+    },
+    {
+      "id": "p_2504_14689",
+      "type": "paper",
+      "name": "Designing AI Systems that Augment Human Performed vs. Demonstrated Critical Thinking",
+      "props": {
+        "year": 2025,
+        "arxiv": "2504.14689",
+        "abstract": "The recent rapid advancement of LLM-based AI systems has accelerated our search and production of information. While the advantages brought by these systems seemingly improve the performance or effici"
+      }
+    },
+    {
+      "id": "a_130",
+      "type": "author",
+      "name": "Katelyn Xiaoying Mei",
+      "props": {}
+    },
+    {
+      "id": "a_131",
+      "type": "author",
+      "name": "Nic Weber",
+      "props": {}
+    },
+    {
+      "id": "p_2411_18583",
+      "type": "paper",
+      "name": "Automated Literature Review Using NLP Techniques and LLM-Based Retrieval-Augmented Generation",
+      "props": {
+        "year": 2024,
+        "arxiv": "2411.18583",
+        "abstract": "This research presents and compares multiple approaches to automate the generation of literature reviews using several Natural Language Processing (NLP) techniques and retrieval-augmented generation ("
+      }
+    },
+    {
+      "id": "a_132",
+      "type": "author",
+      "name": "Nurshat Fateh Ali",
+      "props": {}
+    },
+    {
+      "id": "a_133",
+      "type": "author",
+      "name": "Md. Mahdi Mohtasim",
+      "props": {}
+    },
+    {
+      "id": "a_134",
+      "type": "author",
+      "name": "Shakil Mosharrof",
+      "props": {}
+    },
+    {
+      "id": "a_135",
+      "type": "author",
+      "name": "T. Gopi Krishna",
+      "props": {}
+    },
+    {
+      "id": "p_2605_12335",
+      "type": "paper",
+      "name": "EHR-RAGp: Retrieval-Augmented Prototype-Guided Foundation Model for Electronic Health Records",
+      "props": {
+        "year": 2026,
+        "arxiv": "2605.12335",
+        "abstract": "Electronic Health Records (EHR) contain rich longitudinal patient information and are widely used in predictive modeling applications. However, effectively leveraging historical data remains challengi"
+      }
+    },
+    {
+      "id": "a_136",
+      "type": "author",
+      "name": "Saeed Shurrab",
+      "props": {}
+    },
+    {
+      "id": "a_137",
+      "type": "author",
+      "name": "Mariam Al-Omari",
+      "props": {}
+    },
+    {
+      "id": "a_138",
+      "type": "author",
+      "name": "Dana El Samad",
+      "props": {}
+    },
+    {
+      "id": "a_139",
+      "type": "author",
+      "name": "Farah E. Shamout",
+      "props": {}
+    },
+    {
+      "id": "p_2410_03595",
+      "type": "paper",
+      "name": "Understanding Reasoning in Chain-of-Thought from the Hopfieldian View",
+      "props": {
+        "year": 2024,
+        "arxiv": "2410.03595",
+        "abstract": "Large Language Models have demonstrated remarkable abilities across various tasks, with Chain-of-Thought (CoT) prompting emerging as a key technique to enhance reasoning capabilities. However, existin"
+      }
+    },
+    {
+      "id": "a_140",
+      "type": "author",
+      "name": "Lijie Hu",
+      "props": {}
+    },
+    {
+      "id": "a_141",
+      "type": "author",
+      "name": "Liang Liu",
+      "props": {}
+    },
+    {
+      "id": "a_142",
+      "type": "author",
+      "name": "Shu Yang",
+      "props": {}
+    },
+    {
+      "id": "a_143",
+      "type": "author",
+      "name": "Xin Chen",
+      "props": {}
+    },
+    {
+      "id": "a_144",
+      "type": "author",
+      "name": "Zhen Tan",
+      "props": {}
+    },
+    {
+      "id": "p_2311_09277",
+      "type": "paper",
+      "name": "Contrastive Chain-of-Thought Prompting",
+      "props": {
+        "year": 2023,
+        "arxiv": "2311.09277",
+        "abstract": "Despite the success of chain of thought in enhancing language model reasoning, the underlying process remains less well understood. Although logically sound reasoning appears inherently crucial for ch"
+      }
+    },
+    {
+      "id": "a_145",
+      "type": "author",
+      "name": "Yew Ken Chia",
+      "props": {}
+    },
+    {
+      "id": "a_146",
+      "type": "author",
+      "name": "Guizhen Chen",
+      "props": {}
+    },
+    {
+      "id": "a_147",
+      "type": "author",
+      "name": "Luu Anh Tuan",
+      "props": {}
+    },
+    {
+      "id": "a_148",
+      "type": "author",
+      "name": "Soujanya Poria",
+      "props": {}
+    },
+    {
+      "id": "a_149",
+      "type": "author",
+      "name": "Lidong Bing",
+      "props": {}
+    },
+    {
+      "id": "p_2201_11903",
+      "type": "paper",
+      "name": "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models",
+      "props": {
+        "year": 2022,
+        "arxiv": "2201.11903",
+        "abstract": "We explore how generating a chain of thought -- a series of intermediate reasoning steps -- significantly improves the ability of large language models to perform complex reasoning. In particular, we "
+      }
+    },
+    {
+      "id": "a_150",
+      "type": "author",
+      "name": "Jason Wei",
+      "props": {}
+    },
+    {
+      "id": "a_151",
+      "type": "author",
+      "name": "Dale Schuurmans",
+      "props": {}
+    },
+    {
+      "id": "a_152",
+      "type": "author",
+      "name": "Maarten Bosma",
+      "props": {}
+    },
+    {
+      "id": "a_153",
+      "type": "author",
+      "name": "Brian Ichter",
+      "props": {}
+    },
+    {
+      "id": "p_1808_06295",
+      "type": "paper",
+      "name": "Space Weather Prediction from the Ground: Case of CHAIN",
+      "props": {
+        "year": 2018,
+        "arxiv": "1808.06295",
+        "abstract": "In this article, we insist on the importance and the challenges of the prediction of solar eruptive phenomena including flares, coronal mass ejections (CME), and filament eruptions fully based on the "
+      }
+    },
+    {
+      "id": "a_154",
+      "type": "author",
+      "name": "Daikichi Seki",
+      "props": {}
+    },
+    {
+      "id": "a_155",
+      "type": "author",
+      "name": "Satoru Ueno",
+      "props": {}
+    },
+    {
+      "id": "a_156",
+      "type": "author",
+      "name": "Hiroaki Isobe",
+      "props": {}
+    },
+    {
+      "id": "a_157",
+      "type": "author",
+      "name": "Kenichi Otsuji",
+      "props": {}
+    },
+    {
+      "id": "a_158",
+      "type": "author",
+      "name": "Denis P. Cabezas",
+      "props": {}
+    },
+    {
+      "id": "p_2305_17306",
+      "type": "paper",
+      "name": "Chain-of-Thought Hub: A Continuous Effort to Measure Large Language Models' Reasoning Performance",
+      "props": {
+        "year": 2023,
+        "arxiv": "2305.17306",
+        "abstract": "As large language models (LLMs) are continuously being developed, their evaluation becomes increasingly important yet challenging. This work proposes Chain-of-Thought Hub, an open-source evaluation su"
+      }
+    },
+    {
+      "id": "a_159",
+      "type": "author",
+      "name": "Yao Fu",
+      "props": {}
+    },
+    {
+      "id": "a_160",
+      "type": "author",
+      "name": "Litu Ou",
+      "props": {}
+    },
+    {
+      "id": "a_161",
+      "type": "author",
+      "name": "Mingyu Chen",
+      "props": {}
+    },
+    {
+      "id": "a_162",
+      "type": "author",
+      "name": "Yuhao Wan",
+      "props": {}
+    },
+    {
+      "id": "a_163",
+      "type": "author",
+      "name": "Hao Peng",
+      "props": {}
+    },
+    {
+      "id": "p_2304_07919",
+      "type": "paper",
+      "name": "Chain of Thought Prompt Tuning in Vision Language Models",
+      "props": {
+        "year": 2023,
+        "arxiv": "2304.07919",
+        "abstract": "Language-Image Pre-training has demonstrated promising results on zero-shot and few-shot downstream tasks by prompting visual models with natural language prompts. However, most recent studies only us"
+      }
+    },
+    {
+      "id": "a_164",
+      "type": "author",
+      "name": "Jiaxin Ge",
+      "props": {}
+    },
+    {
+      "id": "a_165",
+      "type": "author",
+      "name": "Hongyin Luo",
+      "props": {}
+    },
+    {
+      "id": "a_166",
+      "type": "author",
+      "name": "Siyuan Qian",
+      "props": {}
+    },
+    {
+      "id": "a_167",
+      "type": "author",
+      "name": "Yulu Gan",
+      "props": {}
+    },
+    {
+      "id": "a_168",
+      "type": "author",
+      "name": "Jie Fu",
+      "props": {}
+    },
+    {
+      "id": "p_2602_09258",
+      "type": "paper",
+      "name": "Generalizing GNNs with Tokenized Mixture of Experts",
+      "props": {
+        "year": 2026,
+        "arxiv": "2602.09258",
+        "abstract": "Deployed graph neural networks (GNNs) are frozen at deployment yet must fit clean data, generalize under distribution shifts, and remain stable to perturbations. We show that static inference induces "
+      }
+    },
+    {
+      "id": "a_169",
+      "type": "author",
+      "name": "Xiaoguang Guo",
+      "props": {}
+    },
+    {
+      "id": "a_170",
+      "type": "author",
+      "name": "Zehong Wang",
+      "props": {}
+    },
+    {
+      "id": "a_171",
+      "type": "author",
+      "name": "Jiazheng Li",
+      "props": {}
+    },
+    {
+      "id": "a_172",
+      "type": "author",
+      "name": "Shawn Spitzel",
+      "props": {}
+    },
+    {
+      "id": "a_173",
+      "type": "author",
+      "name": "Qi Yang",
+      "props": {}
+    },
+    {
+      "id": "t_6",
+      "type": "topic",
+      "name": "Mixture of Experts",
+      "props": {}
+    },
+    {
+      "id": "p_2410_17954",
+      "type": "paper",
+      "name": "ExpertFlow: Efficient Mixture-of-Experts Inference via Predictive Expert Caching and Token Scheduling",
+      "props": {
+        "year": 2024,
+        "arxiv": "2410.17954",
+        "abstract": "Sparse Mixture-of-Experts (MoE) models can outperform dense large language models at similar computation by activating only a small set of experts per token. However, stacking many expert modules intr"
+      }
+    },
+    {
+      "id": "a_174",
+      "type": "author",
+      "name": "Xin He",
+      "props": {}
+    },
+    {
+      "id": "a_175",
+      "type": "author",
+      "name": "Shunkang Zhang",
+      "props": {}
+    },
+    {
+      "id": "a_176",
+      "type": "author",
+      "name": "Kaijie Tang",
+      "props": {}
+    },
+    {
+      "id": "a_177",
+      "type": "author",
+      "name": "Shaohuai Shi",
+      "props": {}
+    },
+    {
+      "id": "a_178",
+      "type": "author",
+      "name": "Yuxin Wang",
+      "props": {}
+    },
+    {
+      "id": "p_2402_14800",
+      "type": "paper",
+      "name": "Not All Experts are Equal: Efficient Expert Pruning and Skipping for Mixture-of-Experts Large Language Models",
+      "props": {
+        "year": 2024,
+        "arxiv": "2402.14800",
+        "abstract": "A pivotal advancement in the progress of large language models (LLMs) is the emergence of the Mixture-of-Experts (MoE) LLMs. Compared to traditional LLMs, MoE LLMs can achieve higher performance with "
+      }
+    },
+    {
+      "id": "a_179",
+      "type": "author",
+      "name": "Xudong Lu",
+      "props": {}
+    },
+    {
+      "id": "a_180",
+      "type": "author",
+      "name": "Qi Liu",
+      "props": {}
+    },
+    {
+      "id": "a_181",
+      "type": "author",
+      "name": "Yuhui Xu",
+      "props": {}
+    },
+    {
+      "id": "a_182",
+      "type": "author",
+      "name": "Aojun Zhou",
+      "props": {}
+    },
+    {
+      "id": "a_183",
+      "type": "author",
+      "name": "Siyuan Huang",
+      "props": {}
+    },
+    {
+      "id": "p_2312_04693",
+      "type": "paper",
+      "name": "GraphMETRO: Mitigating Complex Graph Distribution Shifts via Mixture of Aligned Experts",
+      "props": {
+        "year": 2023,
+        "arxiv": "2312.04693",
+        "abstract": "Graph data are inherently complex and heterogeneous, leading to a high natural diversity of distributional shifts. However, it remains unclear how to build machine learning architectures that generali"
+      }
+    },
+    {
+      "id": "a_184",
+      "type": "author",
+      "name": "Shirley Wu",
+      "props": {}
+    },
+    {
+      "id": "a_185",
+      "type": "author",
+      "name": "Kaidi Cao",
+      "props": {}
+    },
+    {
+      "id": "a_186",
+      "type": "author",
+      "name": "Bruno Ribeiro",
+      "props": {}
+    },
+    {
+      "id": "a_187",
+      "type": "author",
+      "name": "James Zou",
+      "props": {}
+    },
+    {
+      "id": "a_188",
+      "type": "author",
+      "name": "Jure Leskovec",
+      "props": {}
+    },
+    {
+      "id": "p_1806_08200",
+      "type": "paper",
+      "name": "Mixtures of Experts Models",
+      "props": {
+        "year": 2018,
+        "arxiv": "1806.08200",
+        "abstract": "Mixtures of experts models provide a framework in which covariates may be included in mixture models. This is achieved by modelling the parameters of the mixture model as functions of the concomitant "
+      }
+    },
+    {
+      "id": "a_189",
+      "type": "author",
+      "name": "Isobel Claire Gormley",
+      "props": {}
+    },
+    {
+      "id": "a_190",
+      "type": "author",
+      "name": "Sylvia Fr\u00fchwirth-Schnatter",
+      "props": {}
+    },
+    {
+      "id": "p_2503_03213",
+      "type": "paper",
+      "name": "Convergence Rates for Softmax Gating Mixture of Experts",
+      "props": {
+        "year": 2025,
+        "arxiv": "2503.03213",
+        "abstract": "Mixture of experts (MoE) has recently emerged as an effective framework to advance the efficiency and scalability of machine learning models by softly dividing complex tasks among multiple specialized"
+      }
+    },
+    {
+      "id": "a_191",
+      "type": "author",
+      "name": "Huy Nguyen",
+      "props": {}
+    },
+    {
+      "id": "a_192",
+      "type": "author",
+      "name": "Nhat Ho",
+      "props": {}
+    },
+    {
+      "id": "a_193",
+      "type": "author",
+      "name": "Alessandro Rinaldo",
+      "props": {}
+    },
+    {
+      "id": "p_1707_09430",
+      "type": "paper",
+      "name": "Human in the Loop: Interactive Passive Automata Learning via Evidence-Driven State-Merging Algorithms",
+      "props": {
+        "year": 2017,
+        "arxiv": "1707.09430",
+        "abstract": "We present an interactive version of an evidence-driven state-merging (EDSM) algorithm for learning variants of finite state automata. Learning these automata often amounts to recovering or reverse en"
+      }
+    },
+    {
+      "id": "a_194",
+      "type": "author",
+      "name": "Christian A. Hammerschmidt",
+      "props": {}
+    },
+    {
+      "id": "a_195",
+      "type": "author",
+      "name": "Radu State",
+      "props": {}
+    },
+    {
+      "id": "a_196",
+      "type": "author",
+      "name": "Sicco Verwer",
+      "props": {}
+    },
+    {
+      "id": "p_9705013",
+      "type": "paper",
+      "name": "FASTUS: A Cascaded Finite-State Transducer for Extracting Information from Natural-Language Text",
+      "props": {
+        "year": 1997,
+        "arxiv": "9705013",
+        "abstract": "  FASTUS is a system for extracting information from natural language text for entry into a database and for other applications. It works essentially as a cascaded, nondeterministic finite-state autom"
+      }
+    },
+    {
+      "id": "a_197",
+      "type": "author",
+      "name": "Jerry R. Hobbs",
+      "props": {}
+    },
+    {
+      "id": "a_198",
+      "type": "author",
+      "name": "Douglas Appelt",
+      "props": {}
+    },
+    {
+      "id": "a_199",
+      "type": "author",
+      "name": "John Bear",
+      "props": {}
+    },
+    {
+      "id": "a_200",
+      "type": "author",
+      "name": "David Israel",
+      "props": {}
+    },
+    {
+      "id": "a_201",
+      "type": "author",
+      "name": "Megumi Kameyama",
+      "props": {}
+    },
+    {
+      "id": "p_2503_24102",
+      "type": "paper",
+      "name": "Is Small Language Model the Silver Bullet to Low-Resource Languages Machine Translation?",
+      "props": {
+        "year": 2025,
+        "arxiv": "2503.24102",
+        "abstract": "Low-resource languages (LRLs) lack sufficient linguistic resources and are underrepresented in benchmark datasets, resulting in persistently lower translation quality than high-resource languages, esp"
+      }
+    },
+    {
+      "id": "a_202",
+      "type": "author",
+      "name": "Yewei Song",
+      "props": {}
+    },
+    {
+      "id": "a_203",
+      "type": "author",
+      "name": "Lujun Li",
+      "props": {}
+    },
+    {
+      "id": "a_204",
+      "type": "author",
+      "name": "Cedric Lothritz",
+      "props": {}
+    },
+    {
+      "id": "a_205",
+      "type": "author",
+      "name": "Saad Ezzini",
+      "props": {}
+    },
+    {
+      "id": "a_206",
+      "type": "author",
+      "name": "Lama Sleem",
+      "props": {}
+    },
+    {
+      "id": "p_0804_4433",
+      "type": "paper",
+      "name": "SPACE: the SPectroscopic All-sky Cosmic Explorer",
+      "props": {
+        "year": 2008,
+        "arxiv": "0804.4433",
+        "abstract": "  We describe the scientific motivations, the mission concept and the instrumentation of SPACE, a class-M mission proposed for concept study at the first call of the ESA Cosmic-Vision 2015-2025 planni"
+      }
+    },
+    {
+      "id": "a_207",
+      "type": "author",
+      "name": "A. Cimatti",
+      "props": {}
+    },
+    {
+      "id": "a_208",
+      "type": "author",
+      "name": "M. Robberto",
+      "props": {}
+    },
+    {
+      "id": "a_209",
+      "type": "author",
+      "name": "C. M. Baugh",
+      "props": {}
+    },
+    {
+      "id": "a_210",
+      "type": "author",
+      "name": "S. V. W. Beckwith",
+      "props": {}
+    },
+    {
+      "id": "a_211",
+      "type": "author",
+      "name": "R. Content",
+      "props": {}
+    },
+    {
+      "id": "p_2503_21676",
+      "type": "paper",
+      "name": "How do language models learn facts? Dynamics, curricula and hallucinations",
+      "props": {
+        "year": 2025,
+        "arxiv": "2503.21676",
+        "abstract": "Large language models accumulate vast knowledge during pre-training, yet the dynamics governing this acquisition remain poorly understood. This work investigates the learning dynamics of language mode"
+      }
+    },
+    {
+      "id": "a_212",
+      "type": "author",
+      "name": "Nicolas Zucchet",
+      "props": {}
+    },
+    {
+      "id": "a_213",
+      "type": "author",
+      "name": "J\u00f6rg Bornschein",
+      "props": {}
+    },
+    {
+      "id": "a_214",
+      "type": "author",
+      "name": "Stephanie Chan",
+      "props": {}
+    },
+    {
+      "id": "a_215",
+      "type": "author",
+      "name": "Andrew Lampinen",
+      "props": {}
+    },
+    {
+      "id": "a_216",
+      "type": "author",
+      "name": "Razvan Pascanu",
+      "props": {}
+    },
+    {
+      "id": "p_2409_02228",
+      "type": "paper",
+      "name": "Unforgettable Generalization in Language Models",
+      "props": {
+        "year": 2024,
+        "arxiv": "2409.02228",
+        "abstract": "When language models (LMs) are trained to forget (or \"unlearn'') a skill, how precisely does their behavior change? We study the behavior of transformer LMs in which tasks have been forgotten via fine"
+      }
+    },
+    {
+      "id": "a_217",
+      "type": "author",
+      "name": "Eric Zhang",
+      "props": {}
+    },
+    {
+      "id": "a_218",
+      "type": "author",
+      "name": "Leshem Chosen",
+      "props": {}
+    },
+    {
+      "id": "a_219",
+      "type": "author",
+      "name": "Jacob Andreas",
+      "props": {}
+    }
   ],
   "edges": [
-    {"from": "a1", "to": "p1", "rel": "authored"},
-    {"from": "a2", "to": "p2", "rel": "authored"},
-    {"from": "a3", "to": "p3", "rel": "authored"},
-    {"from": "a4", "to": "p4", "rel": "authored"},
-    {"from": "a5", "to": "p5", "rel": "authored"},
-    {"from": "p1", "to": "t1", "rel": "introduces"},
-    {"from": "p2", "to": "t2", "rel": "uses"},
-    {"from": "p4", "to": "t3", "rel": "introduces"},
-    {"from": "p5", "to": "t4", "rel": "introduces"},
-    {"from": "p2", "to": "p1", "rel": "cites"},
-    {"from": "p3", "to": "p1", "rel": "cites"},
-    {"from": "p4", "to": "p2", "rel": "cites"},
-    {"from": "p5", "to": "p1", "rel": "cites"},
-    {"from": "a1", "to": "i1", "rel": "affiliated"},
-    {"from": "a3", "to": "i2", "rel": "affiliated"},
-    {"from": "a5", "to": "i3", "rel": "affiliated"}
+    {
+      "from": "a_0",
+      "to": "i_0",
+      "rel": "affiliated"
+    },
+    {
+      "from": "a_0",
+      "to": "p_1706_03762",
+      "rel": "authored"
+    },
+    {
+      "from": "a_1",
+      "to": "i_0",
+      "rel": "affiliated"
+    },
+    {
+      "from": "a_1",
+      "to": "p_1706_03762",
+      "rel": "authored"
+    },
+    {
+      "from": "a_2",
+      "to": "p_1706_03762",
+      "rel": "authored"
+    },
+    {
+      "from": "a_3",
+      "to": "p_1706_03762",
+      "rel": "authored"
+    },
+    {
+      "from": "a_4",
+      "to": "p_1706_03762",
+      "rel": "authored"
+    },
+    {
+      "from": "p_1706_03762",
+      "to": "t_0",
+      "rel": "about"
+    },
+    {
+      "from": "a_5",
+      "to": "i_1",
+      "rel": "affiliated"
+    },
+    {
+      "from": "a_5",
+      "to": "p_1810_04805",
+      "rel": "authored"
+    },
+    {
+      "from": "a_6",
+      "to": "i_1",
+      "rel": "affiliated"
+    },
+    {
+      "from": "a_6",
+      "to": "p_1810_04805",
+      "rel": "authored"
+    },
+    {
+      "from": "a_7",
+      "to": "p_1810_04805",
+      "rel": "authored"
+    },
+    {
+      "from": "a_8",
+      "to": "p_1810_04805",
+      "rel": "authored"
+    },
+    {
+      "from": "p_1810_04805",
+      "to": "t_0",
+      "rel": "about"
+    },
+    {
+      "from": "p_1810_04805",
+      "to": "t_1",
+      "rel": "about"
+    },
+    {
+      "from": "p_1810_04805",
+      "to": "t_2",
+      "rel": "about"
+    },
+    {
+      "from": "a_9",
+      "to": "p_2005_14165",
+      "rel": "authored"
+    },
+    {
+      "from": "a_10",
+      "to": "p_2005_14165",
+      "rel": "authored"
+    },
+    {
+      "from": "a_11",
+      "to": "p_2005_14165",
+      "rel": "authored"
+    },
+    {
+      "from": "a_12",
+      "to": "p_2005_14165",
+      "rel": "authored"
+    },
+    {
+      "from": "a_13",
+      "to": "p_2005_14165",
+      "rel": "authored"
+    },
+    {
+      "from": "p_2005_14165",
+      "to": "t_1",
+      "rel": "about"
+    },
+    {
+      "from": "p_2005_14165",
+      "to": "t_2",
+      "rel": "about"
+    },
+    {
+      "from": "p_2005_14165",
+      "to": "t_3",
+      "rel": "about"
+    },
+    {
+      "from": "a_14",
+      "to": "p_2106_09685",
+      "rel": "authored"
+    },
+    {
+      "from": "a_15",
+      "to": "i_2",
+      "rel": "affiliated"
+    },
+    {
+      "from": "a_15",
+      "to": "p_2106_09685",
+      "rel": "authored"
+    },
+    {
+      "from": "a_16",
+      "to": "p_2106_09685",
+      "rel": "authored"
+    },
+    {
+      "from": "a_17",
+      "to": "p_2106_09685",
+      "rel": "authored"
+    },
+    {
+      "from": "a_18",
+      "to": "p_2106_09685",
+      "rel": "authored"
+    },
+    {
+      "from": "p_2106_09685",
+      "to": "t_1",
+      "rel": "about"
+    },
+    {
+      "from": "p_2106_09685",
+      "to": "t_2",
+      "rel": "about"
+    },
+    {
+      "from": "a_19",
+      "to": "i_3",
+      "rel": "affiliated"
+    },
+    {
+      "from": "a_19",
+      "to": "p_2205_14135",
+      "rel": "authored"
+    },
+    {
+      "from": "a_20",
+      "to": "p_2205_14135",
+      "rel": "authored"
+    },
+    {
+      "from": "a_21",
+      "to": "p_2205_14135",
+      "rel": "authored"
+    },
+    {
+      "from": "a_22",
+      "to": "p_2205_14135",
+      "rel": "authored"
+    },
+    {
+      "from": "a_23",
+      "to": "i_3",
+      "rel": "affiliated"
+    },
+    {
+      "from": "a_23",
+      "to": "p_2205_14135",
+      "rel": "authored"
+    },
+    {
+      "from": "p_2205_14135",
+      "to": "t_0",
+      "rel": "about"
+    },
+    {
+      "from": "p_2205_14135",
+      "to": "t_4",
+      "rel": "about"
+    },
+    {
+      "from": "a_24",
+      "to": "p_1301_3666",
+      "rel": "authored"
+    },
+    {
+      "from": "a_25",
+      "to": "p_1301_3666",
+      "rel": "authored"
+    },
+    {
+      "from": "a_26",
+      "to": "p_1301_3666",
+      "rel": "authored"
+    },
+    {
+      "from": "a_27",
+      "to": "p_1301_3666",
+      "rel": "authored"
+    },
+    {
+      "from": "a_28",
+      "to": "p_1301_3666",
+      "rel": "authored"
+    },
+    {
+      "from": "p_1301_3666",
+      "to": "t_3",
+      "rel": "about"
+    },
+    {
+      "from": "a_29",
+      "to": "p_1607_06450",
+      "rel": "authored"
+    },
+    {
+      "from": "a_30",
+      "to": "p_1607_06450",
+      "rel": "authored"
+    },
+    {
+      "from": "a_31",
+      "to": "p_1607_06450",
+      "rel": "authored"
+    },
+    {
+      "from": "a_32",
+      "to": "p_1512_03385",
+      "rel": "authored"
+    },
+    {
+      "from": "a_33",
+      "to": "p_1512_03385",
+      "rel": "authored"
+    },
+    {
+      "from": "a_34",
+      "to": "p_1512_03385",
+      "rel": "authored"
+    },
+    {
+      "from": "a_35",
+      "to": "p_1512_03385",
+      "rel": "authored"
+    },
+    {
+      "from": "a_36",
+      "to": "p_2010_11929",
+      "rel": "authored"
+    },
+    {
+      "from": "a_37",
+      "to": "p_2010_11929",
+      "rel": "authored"
+    },
+    {
+      "from": "a_38",
+      "to": "p_2010_11929",
+      "rel": "authored"
+    },
+    {
+      "from": "a_39",
+      "to": "p_2010_11929",
+      "rel": "authored"
+    },
+    {
+      "from": "a_40",
+      "to": "p_2010_11929",
+      "rel": "authored"
+    },
+    {
+      "from": "p_2010_11929",
+      "to": "t_0",
+      "rel": "about"
+    },
+    {
+      "from": "a_41",
+      "to": "p_2203_15556",
+      "rel": "authored"
+    },
+    {
+      "from": "a_42",
+      "to": "p_2203_15556",
+      "rel": "authored"
+    },
+    {
+      "from": "a_43",
+      "to": "p_2203_15556",
+      "rel": "authored"
+    },
+    {
+      "from": "a_44",
+      "to": "p_2203_15556",
+      "rel": "authored"
+    },
+    {
+      "from": "a_45",
+      "to": "p_2203_15556",
+      "rel": "authored"
+    },
+    {
+      "from": "p_2203_15556",
+      "to": "t_0",
+      "rel": "about"
+    },
+    {
+      "from": "a_46",
+      "to": "i_4",
+      "rel": "affiliated"
+    },
+    {
+      "from": "a_46",
+      "to": "p_2302_13971",
+      "rel": "authored"
+    },
+    {
+      "from": "a_47",
+      "to": "i_4",
+      "rel": "affiliated"
+    },
+    {
+      "from": "a_47",
+      "to": "p_2302_13971",
+      "rel": "authored"
+    },
+    {
+      "from": "a_48",
+      "to": "p_2302_13971",
+      "rel": "authored"
+    },
+    {
+      "from": "a_49",
+      "to": "p_2302_13971",
+      "rel": "authored"
+    },
+    {
+      "from": "a_50",
+      "to": "p_2302_13971",
+      "rel": "authored"
+    },
+    {
+      "from": "a_51",
+      "to": "p_2310_06825",
+      "rel": "authored"
+    },
+    {
+      "from": "a_52",
+      "to": "p_2310_06825",
+      "rel": "authored"
+    },
+    {
+      "from": "a_43",
+      "to": "p_2310_06825",
+      "rel": "authored"
+    },
+    {
+      "from": "a_53",
+      "to": "p_2310_06825",
+      "rel": "authored"
+    },
+    {
+      "from": "a_54",
+      "to": "p_2310_06825",
+      "rel": "authored"
+    },
+    {
+      "from": "p_2310_06825",
+      "to": "t_0",
+      "rel": "about"
+    },
+    {
+      "from": "p_2310_06825",
+      "to": "t_2",
+      "rel": "about"
+    },
+    {
+      "from": "p_2310_06825",
+      "to": "t_5",
+      "rel": "about"
+    },
+    {
+      "from": "a_46",
+      "to": "p_2307_09288",
+      "rel": "authored"
+    },
+    {
+      "from": "a_55",
+      "to": "p_2307_09288",
+      "rel": "authored"
+    },
+    {
+      "from": "a_56",
+      "to": "p_2307_09288",
+      "rel": "authored"
+    },
+    {
+      "from": "a_57",
+      "to": "p_2307_09288",
+      "rel": "authored"
+    },
+    {
+      "from": "a_58",
+      "to": "p_2307_09288",
+      "rel": "authored"
+    },
+    {
+      "from": "p_2307_09288",
+      "to": "t_2",
+      "rel": "about"
+    },
+    {
+      "from": "a_59",
+      "to": "p_2210_11610",
+      "rel": "authored"
+    },
+    {
+      "from": "a_60",
+      "to": "p_2210_11610",
+      "rel": "authored"
+    },
+    {
+      "from": "a_61",
+      "to": "p_2210_11610",
+      "rel": "authored"
+    },
+    {
+      "from": "a_62",
+      "to": "p_2210_11610",
+      "rel": "authored"
+    },
+    {
+      "from": "a_63",
+      "to": "p_2210_11610",
+      "rel": "authored"
+    },
+    {
+      "from": "p_2210_11610",
+      "to": "t_1",
+      "rel": "about"
+    },
+    {
+      "from": "p_2210_11610",
+      "to": "t_2",
+      "rel": "about"
+    },
+    {
+      "from": "p_2210_11610",
+      "to": "t_3",
+      "rel": "about"
+    },
+    {
+      "from": "a_64",
+      "to": "p_2112_10752",
+      "rel": "authored"
+    },
+    {
+      "from": "a_65",
+      "to": "p_2112_10752",
+      "rel": "authored"
+    },
+    {
+      "from": "a_66",
+      "to": "p_2112_10752",
+      "rel": "authored"
+    },
+    {
+      "from": "a_67",
+      "to": "p_2112_10752",
+      "rel": "authored"
+    },
+    {
+      "from": "a_68",
+      "to": "p_2112_10752",
+      "rel": "authored"
+    },
+    {
+      "from": "a_69",
+      "to": "p_1910_10683",
+      "rel": "authored"
+    },
+    {
+      "from": "a_1",
+      "to": "p_1910_10683",
+      "rel": "authored"
+    },
+    {
+      "from": "a_70",
+      "to": "p_1910_10683",
+      "rel": "authored"
+    },
+    {
+      "from": "a_71",
+      "to": "p_1910_10683",
+      "rel": "authored"
+    },
+    {
+      "from": "a_72",
+      "to": "p_1910_10683",
+      "rel": "authored"
+    },
+    {
+      "from": "p_1910_10683",
+      "to": "t_0",
+      "rel": "about"
+    },
+    {
+      "from": "p_1910_10683",
+      "to": "t_1",
+      "rel": "about"
+    },
+    {
+      "from": "p_1910_10683",
+      "to": "t_2",
+      "rel": "about"
+    },
+    {
+      "from": "a_73",
+      "to": "p_2103_00020",
+      "rel": "authored"
+    },
+    {
+      "from": "a_74",
+      "to": "p_2103_00020",
+      "rel": "authored"
+    },
+    {
+      "from": "a_75",
+      "to": "p_2103_00020",
+      "rel": "authored"
+    },
+    {
+      "from": "a_76",
+      "to": "p_2103_00020",
+      "rel": "authored"
+    },
+    {
+      "from": "a_77",
+      "to": "p_2103_00020",
+      "rel": "authored"
+    },
+    {
+      "from": "p_2103_00020",
+      "to": "t_1",
+      "rel": "about"
+    },
+    {
+      "from": "p_2103_00020",
+      "to": "t_5",
+      "rel": "about"
+    },
+    {
+      "from": "a_78",
+      "to": "p_2204_05149",
+      "rel": "authored"
+    },
+    {
+      "from": "a_79",
+      "to": "p_2204_05149",
+      "rel": "authored"
+    },
+    {
+      "from": "a_80",
+      "to": "p_2204_05149",
+      "rel": "authored"
+    },
+    {
+      "from": "a_81",
+      "to": "p_2204_05149",
+      "rel": "authored"
+    },
+    {
+      "from": "a_82",
+      "to": "p_2204_05149",
+      "rel": "authored"
+    },
+    {
+      "from": "a_83",
+      "to": "p_1901_00596",
+      "rel": "authored"
+    },
+    {
+      "from": "a_84",
+      "to": "p_1901_00596",
+      "rel": "authored"
+    },
+    {
+      "from": "a_85",
+      "to": "p_1901_00596",
+      "rel": "authored"
+    },
+    {
+      "from": "a_86",
+      "to": "p_1901_00596",
+      "rel": "authored"
+    },
+    {
+      "from": "a_87",
+      "to": "p_1901_00596",
+      "rel": "authored"
+    },
+    {
+      "from": "a_88",
+      "to": "p_2108_12409",
+      "rel": "authored"
+    },
+    {
+      "from": "a_89",
+      "to": "p_2108_12409",
+      "rel": "authored"
+    },
+    {
+      "from": "a_90",
+      "to": "p_2108_12409",
+      "rel": "authored"
+    },
+    {
+      "from": "p_2108_12409",
+      "to": "t_0",
+      "rel": "about"
+    },
+    {
+      "from": "a_91",
+      "to": "p_2309_02144",
+      "rel": "authored"
+    },
+    {
+      "from": "a_92",
+      "to": "p_2309_02144",
+      "rel": "authored"
+    },
+    {
+      "from": "a_93",
+      "to": "p_2309_02144",
+      "rel": "authored"
+    },
+    {
+      "from": "a_94",
+      "to": "p_2309_02144",
+      "rel": "authored"
+    },
+    {
+      "from": "a_95",
+      "to": "p_2309_02144",
+      "rel": "authored"
+    },
+    {
+      "from": "p_2309_02144",
+      "to": "t_2",
+      "rel": "about"
+    },
+    {
+      "from": "a_96",
+      "to": "p_2312_10793",
+      "rel": "authored"
+    },
+    {
+      "from": "a_97",
+      "to": "p_2312_10793",
+      "rel": "authored"
+    },
+    {
+      "from": "a_98",
+      "to": "p_2312_10793",
+      "rel": "authored"
+    },
+    {
+      "from": "a_99",
+      "to": "p_2312_10793",
+      "rel": "authored"
+    },
+    {
+      "from": "a_100",
+      "to": "p_2312_10793",
+      "rel": "authored"
+    },
+    {
+      "from": "p_2312_10793",
+      "to": "t_2",
+      "rel": "about"
+    },
+    {
+      "from": "a_96",
+      "to": "p_2402_11651",
+      "rel": "authored"
+    },
+    {
+      "from": "a_97",
+      "to": "p_2402_11651",
+      "rel": "authored"
+    },
+    {
+      "from": "a_100",
+      "to": "p_2402_11651",
+      "rel": "authored"
+    },
+    {
+      "from": "a_101",
+      "to": "p_2402_11651",
+      "rel": "authored"
+    },
+    {
+      "from": "a_102",
+      "to": "p_2402_11651",
+      "rel": "authored"
+    },
+    {
+      "from": "p_2402_11651",
+      "to": "t_2",
+      "rel": "about"
+    },
+    {
+      "from": "a_103",
+      "to": "p_2304_12244",
+      "rel": "authored"
+    },
+    {
+      "from": "a_104",
+      "to": "p_2304_12244",
+      "rel": "authored"
+    },
+    {
+      "from": "a_105",
+      "to": "p_2304_12244",
+      "rel": "authored"
+    },
+    {
+      "from": "a_106",
+      "to": "p_2304_12244",
+      "rel": "authored"
+    },
+    {
+      "from": "a_107",
+      "to": "p_2304_12244",
+      "rel": "authored"
+    },
+    {
+      "from": "p_2304_12244",
+      "to": "t_1",
+      "rel": "about"
+    },
+    {
+      "from": "a_108",
+      "to": "p_2310_00034",
+      "rel": "authored"
+    },
+    {
+      "from": "a_109",
+      "to": "p_2310_00034",
+      "rel": "authored"
+    },
+    {
+      "from": "a_110",
+      "to": "p_2310_00034",
+      "rel": "authored"
+    },
+    {
+      "from": "a_111",
+      "to": "p_2310_00034",
+      "rel": "authored"
+    },
+    {
+      "from": "p_2310_00034",
+      "to": "t_2",
+      "rel": "about"
+    },
+    {
+      "from": "a_112",
+      "to": "p_2308_16149",
+      "rel": "authored"
+    },
+    {
+      "from": "a_113",
+      "to": "p_2308_16149",
+      "rel": "authored"
+    },
+    {
+      "from": "a_114",
+      "to": "p_2308_16149",
+      "rel": "authored"
+    },
+    {
+      "from": "a_115",
+      "to": "p_2308_16149",
+      "rel": "authored"
+    },
+    {
+      "from": "a_97",
+      "to": "p_2308_16149",
+      "rel": "authored"
+    },
+    {
+      "from": "a_116",
+      "to": "p_2506_06962",
+      "rel": "authored"
+    },
+    {
+      "from": "a_117",
+      "to": "p_2506_06962",
+      "rel": "authored"
+    },
+    {
+      "from": "a_118",
+      "to": "p_2506_06962",
+      "rel": "authored"
+    },
+    {
+      "from": "a_119",
+      "to": "p_2506_06962",
+      "rel": "authored"
+    },
+    {
+      "from": "p_2506_06962",
+      "to": "t_5",
+      "rel": "about"
+    },
+    {
+      "from": "a_120",
+      "to": "p_2504_13684",
+      "rel": "authored"
+    },
+    {
+      "from": "a_121",
+      "to": "p_2504_13684",
+      "rel": "authored"
+    },
+    {
+      "from": "a_122",
+      "to": "p_2504_13684",
+      "rel": "authored"
+    },
+    {
+      "from": "a_123",
+      "to": "p_2504_13684",
+      "rel": "authored"
+    },
+    {
+      "from": "a_124",
+      "to": "p_2504_13684",
+      "rel": "authored"
+    },
+    {
+      "from": "a_125",
+      "to": "p_2504_17204",
+      "rel": "authored"
+    },
+    {
+      "from": "a_126",
+      "to": "p_2504_17204",
+      "rel": "authored"
+    },
+    {
+      "from": "a_127",
+      "to": "p_2504_17204",
+      "rel": "authored"
+    },
+    {
+      "from": "a_128",
+      "to": "p_2504_17204",
+      "rel": "authored"
+    },
+    {
+      "from": "a_129",
+      "to": "p_2504_17204",
+      "rel": "authored"
+    },
+    {
+      "from": "a_130",
+      "to": "p_2504_14689",
+      "rel": "authored"
+    },
+    {
+      "from": "a_131",
+      "to": "p_2504_14689",
+      "rel": "authored"
+    },
+    {
+      "from": "a_132",
+      "to": "p_2411_18583",
+      "rel": "authored"
+    },
+    {
+      "from": "a_133",
+      "to": "p_2411_18583",
+      "rel": "authored"
+    },
+    {
+      "from": "a_134",
+      "to": "p_2411_18583",
+      "rel": "authored"
+    },
+    {
+      "from": "a_135",
+      "to": "p_2411_18583",
+      "rel": "authored"
+    },
+    {
+      "from": "p_2411_18583",
+      "to": "t_5",
+      "rel": "about"
+    },
+    {
+      "from": "a_136",
+      "to": "p_2605_12335",
+      "rel": "authored"
+    },
+    {
+      "from": "a_137",
+      "to": "p_2605_12335",
+      "rel": "authored"
+    },
+    {
+      "from": "a_138",
+      "to": "p_2605_12335",
+      "rel": "authored"
+    },
+    {
+      "from": "a_139",
+      "to": "p_2605_12335",
+      "rel": "authored"
+    },
+    {
+      "from": "p_2605_12335",
+      "to": "t_5",
+      "rel": "about"
+    },
+    {
+      "from": "a_140",
+      "to": "p_2410_03595",
+      "rel": "authored"
+    },
+    {
+      "from": "a_141",
+      "to": "p_2410_03595",
+      "rel": "authored"
+    },
+    {
+      "from": "a_142",
+      "to": "p_2410_03595",
+      "rel": "authored"
+    },
+    {
+      "from": "a_143",
+      "to": "p_2410_03595",
+      "rel": "authored"
+    },
+    {
+      "from": "a_144",
+      "to": "p_2410_03595",
+      "rel": "authored"
+    },
+    {
+      "from": "p_2410_03595",
+      "to": "t_3",
+      "rel": "about"
+    },
+    {
+      "from": "a_145",
+      "to": "p_2311_09277",
+      "rel": "authored"
+    },
+    {
+      "from": "a_146",
+      "to": "p_2311_09277",
+      "rel": "authored"
+    },
+    {
+      "from": "a_147",
+      "to": "p_2311_09277",
+      "rel": "authored"
+    },
+    {
+      "from": "a_148",
+      "to": "p_2311_09277",
+      "rel": "authored"
+    },
+    {
+      "from": "a_149",
+      "to": "p_2311_09277",
+      "rel": "authored"
+    },
+    {
+      "from": "p_2311_09277",
+      "to": "t_3",
+      "rel": "about"
+    },
+    {
+      "from": "a_150",
+      "to": "p_2201_11903",
+      "rel": "authored"
+    },
+    {
+      "from": "a_63",
+      "to": "p_2201_11903",
+      "rel": "authored"
+    },
+    {
+      "from": "a_151",
+      "to": "p_2201_11903",
+      "rel": "authored"
+    },
+    {
+      "from": "a_152",
+      "to": "p_2201_11903",
+      "rel": "authored"
+    },
+    {
+      "from": "a_153",
+      "to": "p_2201_11903",
+      "rel": "authored"
+    },
+    {
+      "from": "p_2201_11903",
+      "to": "t_3",
+      "rel": "about"
+    },
+    {
+      "from": "a_154",
+      "to": "p_1808_06295",
+      "rel": "authored"
+    },
+    {
+      "from": "a_155",
+      "to": "p_1808_06295",
+      "rel": "authored"
+    },
+    {
+      "from": "a_156",
+      "to": "p_1808_06295",
+      "rel": "authored"
+    },
+    {
+      "from": "a_157",
+      "to": "p_1808_06295",
+      "rel": "authored"
+    },
+    {
+      "from": "a_158",
+      "to": "p_1808_06295",
+      "rel": "authored"
+    },
+    {
+      "from": "a_159",
+      "to": "p_2305_17306",
+      "rel": "authored"
+    },
+    {
+      "from": "a_160",
+      "to": "p_2305_17306",
+      "rel": "authored"
+    },
+    {
+      "from": "a_161",
+      "to": "p_2305_17306",
+      "rel": "authored"
+    },
+    {
+      "from": "a_162",
+      "to": "p_2305_17306",
+      "rel": "authored"
+    },
+    {
+      "from": "a_163",
+      "to": "p_2305_17306",
+      "rel": "authored"
+    },
+    {
+      "from": "a_164",
+      "to": "p_2304_07919",
+      "rel": "authored"
+    },
+    {
+      "from": "a_165",
+      "to": "p_2304_07919",
+      "rel": "authored"
+    },
+    {
+      "from": "a_166",
+      "to": "p_2304_07919",
+      "rel": "authored"
+    },
+    {
+      "from": "a_167",
+      "to": "p_2304_07919",
+      "rel": "authored"
+    },
+    {
+      "from": "a_168",
+      "to": "p_2304_07919",
+      "rel": "authored"
+    },
+    {
+      "from": "p_2304_07919",
+      "to": "t_1",
+      "rel": "about"
+    },
+    {
+      "from": "p_2304_07919",
+      "to": "t_3",
+      "rel": "about"
+    },
+    {
+      "from": "a_169",
+      "to": "p_2602_09258",
+      "rel": "authored"
+    },
+    {
+      "from": "a_170",
+      "to": "p_2602_09258",
+      "rel": "authored"
+    },
+    {
+      "from": "a_171",
+      "to": "p_2602_09258",
+      "rel": "authored"
+    },
+    {
+      "from": "a_172",
+      "to": "p_2602_09258",
+      "rel": "authored"
+    },
+    {
+      "from": "a_173",
+      "to": "p_2602_09258",
+      "rel": "authored"
+    },
+    {
+      "from": "p_2602_09258",
+      "to": "t_5",
+      "rel": "about"
+    },
+    {
+      "from": "p_2602_09258",
+      "to": "t_6",
+      "rel": "about"
+    },
+    {
+      "from": "a_174",
+      "to": "p_2410_17954",
+      "rel": "authored"
+    },
+    {
+      "from": "a_175",
+      "to": "p_2410_17954",
+      "rel": "authored"
+    },
+    {
+      "from": "a_176",
+      "to": "p_2410_17954",
+      "rel": "authored"
+    },
+    {
+      "from": "a_177",
+      "to": "p_2410_17954",
+      "rel": "authored"
+    },
+    {
+      "from": "a_178",
+      "to": "p_2410_17954",
+      "rel": "authored"
+    },
+    {
+      "from": "p_2410_17954",
+      "to": "t_6",
+      "rel": "about"
+    },
+    {
+      "from": "a_179",
+      "to": "p_2402_14800",
+      "rel": "authored"
+    },
+    {
+      "from": "a_180",
+      "to": "p_2402_14800",
+      "rel": "authored"
+    },
+    {
+      "from": "a_181",
+      "to": "p_2402_14800",
+      "rel": "authored"
+    },
+    {
+      "from": "a_182",
+      "to": "p_2402_14800",
+      "rel": "authored"
+    },
+    {
+      "from": "a_183",
+      "to": "p_2402_14800",
+      "rel": "authored"
+    },
+    {
+      "from": "p_2402_14800",
+      "to": "t_6",
+      "rel": "about"
+    },
+    {
+      "from": "a_184",
+      "to": "p_2312_04693",
+      "rel": "authored"
+    },
+    {
+      "from": "a_185",
+      "to": "p_2312_04693",
+      "rel": "authored"
+    },
+    {
+      "from": "a_186",
+      "to": "p_2312_04693",
+      "rel": "authored"
+    },
+    {
+      "from": "a_187",
+      "to": "p_2312_04693",
+      "rel": "authored"
+    },
+    {
+      "from": "a_188",
+      "to": "p_2312_04693",
+      "rel": "authored"
+    },
+    {
+      "from": "p_2312_04693",
+      "to": "t_6",
+      "rel": "about"
+    },
+    {
+      "from": "a_189",
+      "to": "p_1806_08200",
+      "rel": "authored"
+    },
+    {
+      "from": "a_190",
+      "to": "p_1806_08200",
+      "rel": "authored"
+    },
+    {
+      "from": "p_1806_08200",
+      "to": "t_6",
+      "rel": "about"
+    },
+    {
+      "from": "a_191",
+      "to": "p_2503_03213",
+      "rel": "authored"
+    },
+    {
+      "from": "a_192",
+      "to": "p_2503_03213",
+      "rel": "authored"
+    },
+    {
+      "from": "a_193",
+      "to": "p_2503_03213",
+      "rel": "authored"
+    },
+    {
+      "from": "p_2503_03213",
+      "to": "t_6",
+      "rel": "about"
+    },
+    {
+      "from": "a_194",
+      "to": "p_1707_09430",
+      "rel": "authored"
+    },
+    {
+      "from": "a_195",
+      "to": "p_1707_09430",
+      "rel": "authored"
+    },
+    {
+      "from": "a_196",
+      "to": "p_1707_09430",
+      "rel": "authored"
+    },
+    {
+      "from": "a_197",
+      "to": "p_9705013",
+      "rel": "authored"
+    },
+    {
+      "from": "a_198",
+      "to": "p_9705013",
+      "rel": "authored"
+    },
+    {
+      "from": "a_199",
+      "to": "p_9705013",
+      "rel": "authored"
+    },
+    {
+      "from": "a_200",
+      "to": "p_9705013",
+      "rel": "authored"
+    },
+    {
+      "from": "a_201",
+      "to": "p_9705013",
+      "rel": "authored"
+    },
+    {
+      "from": "a_202",
+      "to": "p_2503_24102",
+      "rel": "authored"
+    },
+    {
+      "from": "a_203",
+      "to": "p_2503_24102",
+      "rel": "authored"
+    },
+    {
+      "from": "a_204",
+      "to": "p_2503_24102",
+      "rel": "authored"
+    },
+    {
+      "from": "a_205",
+      "to": "p_2503_24102",
+      "rel": "authored"
+    },
+    {
+      "from": "a_206",
+      "to": "p_2503_24102",
+      "rel": "authored"
+    },
+    {
+      "from": "a_207",
+      "to": "p_0804_4433",
+      "rel": "authored"
+    },
+    {
+      "from": "a_208",
+      "to": "p_0804_4433",
+      "rel": "authored"
+    },
+    {
+      "from": "a_209",
+      "to": "p_0804_4433",
+      "rel": "authored"
+    },
+    {
+      "from": "a_210",
+      "to": "p_0804_4433",
+      "rel": "authored"
+    },
+    {
+      "from": "a_211",
+      "to": "p_0804_4433",
+      "rel": "authored"
+    },
+    {
+      "from": "a_212",
+      "to": "p_2503_21676",
+      "rel": "authored"
+    },
+    {
+      "from": "a_213",
+      "to": "p_2503_21676",
+      "rel": "authored"
+    },
+    {
+      "from": "a_214",
+      "to": "p_2503_21676",
+      "rel": "authored"
+    },
+    {
+      "from": "a_215",
+      "to": "p_2503_21676",
+      "rel": "authored"
+    },
+    {
+      "from": "a_216",
+      "to": "p_2503_21676",
+      "rel": "authored"
+    },
+    {
+      "from": "p_2503_21676",
+      "to": "t_0",
+      "rel": "about"
+    },
+    {
+      "from": "p_2503_21676",
+      "to": "t_1",
+      "rel": "about"
+    },
+    {
+      "from": "a_217",
+      "to": "p_2409_02228",
+      "rel": "authored"
+    },
+    {
+      "from": "a_218",
+      "to": "p_2409_02228",
+      "rel": "authored"
+    },
+    {
+      "from": "a_219",
+      "to": "p_2409_02228",
+      "rel": "authored"
+    },
+    {
+      "from": "p_2409_02228",
+      "to": "t_0",
+      "rel": "about"
+    },
+    {
+      "from": "p_2409_02228",
+      "to": "t_2",
+      "rel": "about"
+    }
   ]
 }

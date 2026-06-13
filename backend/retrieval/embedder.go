@@ -14,11 +14,24 @@ type Embedder struct {
 	apiKey  string
 	baseURL string
 	model   string
-	cache   sync.Map
+	// task is an optional Jina v3 task adapter sent on every request. The query
+	// embedding is used ONLY for routing (retrieval is graph traversal, not
+	// vector search), and the supervised router is fitted on classification-task
+	// embeddings, so the server must embed routing queries with the SAME task or
+	// the projection silently degrades. Empty = no task field (general default).
+	task  string
+	cache sync.Map
 }
 
 func NewEmbedder(apiKey, baseURL, model string) *Embedder {
 	return &Embedder{apiKey: apiKey, baseURL: baseURL, model: model}
+}
+
+// NewEmbedderWithTask is like NewEmbedder but pins a Jina v3 task adapter (e.g.
+// "classification") on every request, to match the task the routing projection
+// was fitted on.
+func NewEmbedderWithTask(apiKey, baseURL, model, task string) *Embedder {
+	return &Embedder{apiKey: apiKey, baseURL: baseURL, model: model, task: task}
 }
 
 // Mock reports whether the embedder has no API key configured and will return
@@ -38,10 +51,14 @@ func (e *Embedder) Embed(text string) ([]float32, error) {
 		return mockEmbedding(text), nil
 	}
 
-	body, _ := json.Marshal(map[string]interface{}{
+	payload := map[string]interface{}{
 		"model": e.model,
 		"input": []string{text},
-	})
+	}
+	if e.task != "" {
+		payload["task"] = e.task
+	}
+	body, _ := json.Marshal(payload)
 	req, _ := http.NewRequest("POST", e.baseURL+"/embeddings", bytes.NewReader(body))
 	req.Header.Set("Authorization", "Bearer "+e.apiKey)
 	req.Header.Set("Content-Type", "application/json")
