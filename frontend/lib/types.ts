@@ -4,6 +4,12 @@ export interface Centroid {
   y: number;
 }
 
+export interface ModelInfo {
+  id: string;
+  context: number;
+  size: number;
+}
+
 // RouteInfo accumulates across the SSE stream: path/hops arrive as response
 // headers, the leading `route` event fills in the full routing detail, and the
 // trailing `meta` event adds latency + interception counts. Fields beyond the

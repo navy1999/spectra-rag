@@ -9,7 +9,7 @@ function sse(obj: unknown): string {
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { query } = body;
+  const { query, model } = body;
 
   const encoder = new TextEncoder();
   const stream = new TransformStream();
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     backendRes = await fetch(`${BACKEND_URL}/query`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query }),
+      body: JSON.stringify({ query, model }),
       signal: AbortSignal.timeout(60000),
     });
     if (!backendRes.ok) throw new Error(`Backend ${backendRes.status}`);
@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
         method: "POST",
         headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: FALLBACK_MODEL,
+          model: model || FALLBACK_MODEL,
           messages: [{ role: "user", content: query }],
           stream: true,
         }),

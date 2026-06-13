@@ -6,7 +6,7 @@ import { InputBar } from "@/components/InputBar";
 import { TopBar } from "@/components/TopBar";
 import { PipelineInspector } from "@/components/PipelineInspector";
 import { DiagnosticBanner } from "@/components/DiagnosticBanner";
-import { Message, ChatSession, SystemStatus, Diagnostic } from "@/lib/types";
+import { Message, ChatSession, SystemStatus, Diagnostic, ModelInfo } from "@/lib/types";
 import { sendMessage } from "@/lib/api";
 
 function genId() {
@@ -20,22 +20,43 @@ export default function Home() {
   const [status, setStatus] = useState<SystemStatus>({ status: "checking" });
   const [diagnostic, setDiagnostic] = useState<Diagnostic | null>(null);
   const [inspectorOpen, setInspectorOpen] = useState(true);
+  const [models, setModels] = useState<ModelInfo[]>([]);
+  const [selectedModel, setSelectedModel] = useState<string | null>(null);
 
   const activeSession = sessions.find((s) => s.id === activeSessionId) ?? null;
   const messages = activeSession?.messages ?? [];
 
   // At-rest status read so the badge reflects pipeline availability before the
-  // first query.
+  // first query; also seeds the model picker with the backend's default.
   useEffect(() => {
     let cancelled = false;
     fetch("/api/health", { cache: "no-store" })
       .then((r) => r.json())
       .then((j) => {
-        if (!cancelled) setStatus({ status: j.status ?? "unavailable", model: j.model, mock: j.mock });
+        if (cancelled) return;
+        setStatus({ status: j.status ?? "unavailable", model: j.model, mock: j.mock });
+        if (j.model) setSelectedModel((prev) => prev ?? j.model);
       })
       .catch(() => {
         if (!cancelled) setStatus({ status: "unavailable" });
       });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Load the free-model catalog for the picker.
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/models", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((j) => {
+        if (cancelled) return;
+        const list: ModelInfo[] = j.models ?? [];
+        setModels(list);
+        if (list.length > 0) setSelectedModel((prev) => prev ?? list[0].id);
+      })
+      .catch(() => {});
     return () => {
       cancelled = true;
     };
@@ -103,7 +124,7 @@ export default function Home() {
       if (create) setActiveSessionId(sessionId);
       setIsStreaming(true);
 
-      await sendMessage(query, {
+      await sendMessage(query, selectedModel, {
         onChunk: (token) =>
           setSessions((prev) =>
             prev.map((s) =>
@@ -125,7 +146,7 @@ export default function Home() {
         },
       });
     },
-    [activeSessionId, sessions, patchMessage]
+    [activeSessionId, sessions, patchMessage, selectedModel]
   );
 
   const headerTitle = activeSession ? activeSession.title : "New session";
@@ -144,6 +165,10 @@ export default function Home() {
         <TopBar
           title={headerTitle}
           status={status}
+          models={models}
+          selectedModel={selectedModel}
+          onSelectModel={setSelectedModel}
+          streaming={isStreaming}
           inspectorOpen={inspectorOpen}
           onToggleInspector={() => setInspectorOpen((v) => !v)}
         />

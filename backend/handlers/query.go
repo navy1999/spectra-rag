@@ -40,6 +40,7 @@ func New(cfg *config.Config, store *retrieval.Store) *Handler {
 
 type QueryRequest struct {
 	Query string `json:"query" binding:"required"`
+	Model string `json:"model"` // optional per-request model override
 }
 
 func (h *Handler) Query(c *gin.Context) {
@@ -50,6 +51,14 @@ func (h *Handler) Query(c *gin.Context) {
 	}
 
 	start := time.Now()
+
+	// A request may override the model (UI model picker); otherwise use the
+	// configured default. The same model is used for generation and for the
+	// evaluator votes so the run is internally consistent.
+	model := h.cfg.DefaultModel
+	if m := strings.TrimSpace(req.Model); m != "" {
+		model = m
+	}
 
 	// The full pipeline (embed → route → retrieve → penalty) runs even in MOCK
 	// mode — the embedder falls back to a deterministic hash embedding and the
@@ -72,7 +81,7 @@ func (h *Handler) Query(c *gin.Context) {
 		evalCfg := agent.EvaluatorConfig{
 			APIKey:  h.cfg.OpenRouterAPIKey,
 			BaseURL: h.cfg.OpenRouterBaseURL,
-			Model:   h.cfg.DefaultModel,
+			Model:   model,
 			MockLLM: h.cfg.MockLLM,
 		}
 		loop := agent.NewAgentLoop(evalCfg, h.store.Graph(), h.cfg.MaxHops)
@@ -113,11 +122,11 @@ func (h *Handler) Query(c *gin.Context) {
 
 	// 7. Stream
 	if h.cfg.MockLLM {
-		h.streamMock(c, req.Query, decision, len(contextChunks), routeEvt, start)
+		h.streamMock(c, req.Query, model, decision, len(contextChunks), routeEvt, start)
 		return
 	}
 	interceptor := trie.NewInterceptor(h.store.Trie())
-	h.streamLLM(c, sb.String(), decision.Temperature, interceptor, routeEvt, start)
+	h.streamLLM(c, sb.String(), model, decision.Temperature, interceptor, routeEvt, start)
 }
 
 // routeEvent encodes the leading SSE event describing the routing decision and
@@ -145,7 +154,7 @@ func routeEvent(d *router.RouteDecision, hops, chunks int, freqPenalty float64, 
 	})
 }
 
-func (h *Handler) streamMock(c *gin.Context, query string, decision *router.RouteDecision, chunks int, routeEvt string, start time.Time) {
+func (h *Handler) streamMock(c *gin.Context, query, model string, decision *router.RouteDecision, chunks int, routeEvt string, start time.Time) {
 	c.Header("Content-Type", "text/event-stream")
 	c.Header("Cache-Control", "no-cache")
 
@@ -155,7 +164,7 @@ func (h *Handler) streamMock(c *gin.Context, query string, decision *router.Rout
 			"with %.0f%% confidence, took the %s path, and retrieved %d context chunk(s) "+
 			"from the knowledge graph. Set OPENROUTER_API_KEY and MOCK_LLM=false to get "+
 			"real answers from %s.",
-			query, decision.Regime, decision.Confidence*100, decision.Path, chunks, h.cfg.DefaultModel))
+			query, decision.Regime, decision.Confidence*100, decision.Path, chunks, model))
 
 	c.Stream(func(w io.Writer) bool {
 		fmt.Fprintf(w, "data: %s\n\n", routeEvt)
@@ -211,9 +220,9 @@ func metaEvent(latencyMs int64, interceptions int) string {
 	})
 }
 
-func (h *Handler) streamLLM(c *gin.Context, prompt string, temp float64, interceptor *trie.StreamInterceptor, routeEvt string, start time.Time) {
+func (h *Handler) streamLLM(c *gin.Context, prompt, model string, temp float64, interceptor *trie.StreamInterceptor, routeEvt string, start time.Time) {
 	body, _ := json.Marshal(map[string]interface{}{
-		"model": h.cfg.DefaultModel,
+		"model": model,
 		"messages": []map[string]string{
 			{"role": "user", "content": prompt},
 		},

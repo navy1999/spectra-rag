@@ -8,16 +8,8 @@ const MAP: Record<SpectraMode, { dot: string; label: string; tone: string; live:
   unavailable: { dot: "bg-down", label: "Backend offline", tone: "text-red-700 border-red-200 bg-red-50", live: false },
 };
 
-function shortModel(model?: string | null): string | null {
-  if (!model) return null;
-  const noTag = model.replace(/:free$/, "");
-  const slash = noTag.lastIndexOf("/");
-  return slash >= 0 ? noTag.slice(slash + 1) : noTag;
-}
-
 export function SystemStatus({ status }: { status: Status }) {
   const cfg = MAP[status.status];
-  const model = shortModel(status.model);
 
   return (
     <div className="flex items-center gap-2">
@@ -30,11 +22,8 @@ export function SystemStatus({ status }: { status: Status }) {
         </span>
         {cfg.label}
       </div>
-      {model && (
-        <span className="hidden sm:inline font-mono text-[11px] text-muted tnum">
-          {model}
-          {status.mock ? " · mock" : ""}
-        </span>
+      {status.mock && (
+        <span className="hidden font-mono text-[10px] uppercase tracking-wider text-amber-600 sm:inline">mock</span>
       )}
     </div>
   );
