@@ -128,7 +128,27 @@ func (h *Handler) Query(c *gin.Context) {
 		return
 	}
 	interceptor := trie.NewInterceptor(h.store.Trie())
-	h.streamLLM(c, sb.String(), model, decision.Temperature, interceptor, routeEvt, start)
+	// Try the chosen model first, then fall through the configured free-model
+	// fallbacks on a 429 so a rate-limited free model doesn't kill the request.
+	candidates := append([]string{model}, h.cfg.FallbackModels...)
+	h.streamLLM(c, sb.String(), candidates, decision.Temperature, interceptor, routeEvt, start)
+}
+
+// dispatchLLM issues a single streaming completion request for one model and
+// returns the live response. The caller decides whether to retry on the status.
+func (h *Handler) dispatchLLM(prompt, model string, temp float64) (*http.Response, error) {
+	body, _ := json.Marshal(map[string]interface{}{
+		"model": model,
+		"messages": []map[string]string{
+			{"role": "user", "content": prompt},
+		},
+		"temperature": temp,
+		"stream":      true,
+	})
+	req, _ := http.NewRequest("POST", h.cfg.OpenRouterBaseURL+"/chat/completions", bytes.NewReader(body))
+	req.Header.Set("Authorization", "Bearer "+h.cfg.OpenRouterAPIKey)
+	req.Header.Set("Content-Type", "application/json")
+	return http.DefaultClient.Do(req)
 }
 
 // routeEvent encodes the leading SSE event describing the routing decision and
@@ -222,47 +242,56 @@ func metaEvent(latencyMs int64, interceptions int) string {
 	})
 }
 
-func (h *Handler) streamLLM(c *gin.Context, prompt, model string, temp float64, interceptor *trie.StreamInterceptor, routeEvt string, start time.Time) {
-	body, _ := json.Marshal(map[string]interface{}{
-		"model": model,
-		"messages": []map[string]string{
-			{"role": "user", "content": prompt},
-		},
-		"temperature": temp,
-		"stream":      true,
-	})
-
-	req, _ := http.NewRequest("POST", h.cfg.OpenRouterBaseURL+"/chat/completions", bytes.NewReader(body))
-	req.Header.Set("Authorization", "Bearer "+h.cfg.OpenRouterAPIKey)
-	req.Header.Set("Content-Type", "application/json")
-
+func (h *Handler) streamLLM(c *gin.Context, prompt string, models []string, temp float64, interceptor *trie.StreamInterceptor, routeEvt string, start time.Time) {
 	c.Header("Content-Type", "text/event-stream")
 	c.Header("Cache-Control", "no-cache")
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
+	// Walk the candidate models, retrying only on a 429 (free-model rate limit).
+	// Any other error is terminal — surfaced to the diagnostics panel as-is.
+	var resp *http.Response
+	var lastErr error
+	var lastCode int
+	var lastDetail string
+	for i, model := range models {
+		r, err := h.dispatchLLM(prompt, model, temp)
+		if err != nil {
+			lastErr, lastCode = err, 0
+			continue
+		}
+		if r.StatusCode == http.StatusTooManyRequests {
+			b, _ := io.ReadAll(r.Body)
+			r.Body.Close()
+			lastCode, lastDetail = r.StatusCode, strings.TrimSpace(string(b))
+			log.Printf("[spectra-rag] model %s rate-limited (429); trying next fallback (%d left)", model, len(models)-i-1)
+			continue
+		}
+		if r.StatusCode >= 400 {
+			b, _ := io.ReadAll(r.Body)
+			r.Body.Close()
+			lastCode, lastDetail = r.StatusCode, strings.TrimSpace(string(b))
+			log.Printf("[spectra-rag] openrouter error %d on %s: %s", r.StatusCode, model, lastDetail)
+			break
+		}
+		resp = r
+		break
+	}
+
+	if resp == nil {
+		code, msg := lastCode, ""
+		if lastErr != nil {
+			msg = "could not reach the model provider: " + lastErr.Error()
+		} else {
+			msg = summarizeProviderError(lastCode, lastDetail)
+		}
 		c.Stream(func(w io.Writer) bool {
 			fmt.Fprintf(w, "data: %s\n\n", routeEvt)
-			fmt.Fprintf(w, "data: %s\n\n", errorEvent("openrouter", 0, "could not reach the model provider: "+err.Error()))
+			fmt.Fprintf(w, "data: %s\n\n", errorEvent("openrouter", code, msg))
 			fmt.Fprintf(w, "data: [DONE]\n\n")
 			return false
 		})
 		return
 	}
 	defer resp.Body.Close()
-
-	if resp.StatusCode >= 400 {
-		errBody, _ := io.ReadAll(resp.Body)
-		detail := strings.TrimSpace(string(errBody))
-		log.Printf("[spectra-rag] openrouter error %d: %s", resp.StatusCode, detail)
-		c.Stream(func(w io.Writer) bool {
-			fmt.Fprintf(w, "data: %s\n\n", routeEvt)
-			fmt.Fprintf(w, "data: %s\n\n", errorEvent("openrouter", resp.StatusCode, summarizeProviderError(resp.StatusCode, detail)))
-			fmt.Fprintf(w, "data: [DONE]\n\n")
-			return false
-		})
-		return
-	}
 
 	scanner := bufio.NewScanner(resp.Body)
 	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)

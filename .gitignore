@@ -33,10 +33,9 @@ __pycache__/
 Thumbs.db
 tsconfig.tsbuildinfo
 
-# Eval harness (local cache + generated reports; results are not committed)
+# Eval harness: ignore the local response cache and the large raw JSON dumps,
+# but commit the human-readable markdown reports as a published result artifact.
 eval_cache.json
 **/eval_cache.json
 data/eval_results.json
-data/eval_results.md
-data/routing_results.md
 data/routing_results.json

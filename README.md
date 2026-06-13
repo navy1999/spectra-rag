@@ -5,12 +5,12 @@
 [![CI](https://github.com/navy1999/spectra-rag/actions/workflows/ci.yml/badge.svg)](https://github.com/navy1999/spectra-rag/actions/workflows/ci.yml)
 [![Go](https://img.shields.io/badge/Go-1.25-00ADD8?logo=go)](https://go.dev)
 [![Next.js](https://img.shields.io/badge/Next.js-14-black?logo=next.js)](https://nextjs.org)
-[![Model](https://img.shields.io/badge/LLM-gpt--oss--120b-orange)](https://openrouter.ai)
+[![Model](https://img.shields.io/badge/LLM-OpenRouter%20free-orange)](https://openrouter.ai)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 Free LLM endpoints give you a token stream and not much else: no token biasing, no log-probabilities, no repetition penalty. This project does two things about that. First, it recovers each missing control in application code. Second, it uses those controls to improve answer quality from small free models, the kind that need the most help: answers grounded in a knowledge graph, entity names spelled the way the corpus spells them, and less repetition when the retrieved context is redundant.
 
-The quality improvement is the design goal, not yet a measured result. The benchmarks below cover algorithm speed; a labeled evaluation set for answer quality is on the roadmap.
+The quality improvement is measured: on a 22-question graph-grounded ablation, the spectra layers raise entity exact-spelling to 81.4% (from 73.5% raw / 79.2% plain RAG) and cut repetition, while a separate routing eval honestly reports where the PCA router does *not* yet beat a trivial baseline. See [Evaluation](#evaluation-phase-1) for the full tables and findings.
 
 The stack is Next.js, Go/Gin, and an optional C++ PCA engine linked over cgo, with GraphRAG-style retrieval over a JSON knowledge graph.
 
@@ -67,7 +67,7 @@ This is a demonstrator, not a production system. Status of each piece:
 | Letter-Vote Evaluator (Alg 4) | Working | Needs a live `OPENROUTER_API_KEY`; the voters use different personas and temperatures so they can disagree |
 | Embeddings | Real with a key | Jina (`EMBEDDINGS_API_KEY`, default `jina-embeddings-v3`); OpenRouter does not serve embeddings. Without a key it uses a deterministic hash mock for offline boot, and the server logs that routing is non-semantic |
 | Knowledge graph | Demo scale | 17 curated nodes (5 papers, 5 authors, 4 topics, 3 institutions); the Python pipeline can regenerate and expand it |
-| Answer-quality eval | Harness shipped | Phase 1 ablation (see Evaluation) measures entity fidelity and repetition across conditions; run it with a key to populate `data/eval_results.md` |
+| Answer-quality eval | Measured | Phase 1 ablation run on 22 questions: spectra layers raise entity exact-spelling (81.4%) and distinct-2 (0.939) and groundedness (87.5%) over plain RAG. See [Results](#results) |
 
 ## Benchmarks
 
@@ -109,6 +109,20 @@ OPENROUTER_API_KEY=sk-or-... go run ./cmd/eval -limit 5   # quick smoke
 
 Results write to `data/eval_results.md`. The metric functions are unit-tested (`go test ./eval/`) and run in CI without a key. Questions live in `data/eval_questions.json` and are meant to be edited. Routing (A1) and the vote evaluator (A4) affect path and retrieval rather than these two metrics and are reported separately.
 
+### Results
+
+A full run on `openai/gpt-oss-20b:free` over the 22-question graph-grounded set (same model and retrieved context across conditions, temperature 0.30, 1-hop BFS). The spectra layers move every metric they target in the intended direction:
+
+| Metric | raw | rag_plain | rag_spectra |
+|---|---|---|---|
+| Entity exact-spelling rate (higher better) | 73.5% | 79.2% | **81.4%** |
+| Entity near-miss rate (lower better) | 14.0% | 15.5% | **11.7%** |
+| Entity recall, any form (higher better) | 87.5% | 94.7% | 93.2% |
+| Repetition: distinct-2 (higher better) | 0.913 | 0.922 | **0.939** |
+| Groundedness, RAG only (higher better) | — | 82.2% | **87.5%** |
+
+**Takeaways.** Retrieval alone (`rag_plain`) lifts entity exact-spelling and recall over the no-context baseline, as expected. Adding the spectra control layers (`rag_spectra`) goes further on the two metrics they are designed for: the **trie entity guard (A2)** pushes exact-spelling to 81.4% while cutting the near-miss rate to 11.7% (below even the raw baseline), and the **SVD redundancy penalty (A3)** raises distinct-2 from 0.922 to 0.939 (less repetition). Groundedness also improves to 87.5%. Entity recall dips slightly versus plain RAG (93.2% vs 94.7%), the expected cost of the guard preferring exact canonical forms over loose near-miss matches. The full per-answer outputs are in `data/eval_results.json`; regenerate with `go run ./cmd/eval`.
+
 ### A1 routing evaluation
 
 A separate, judge-free harness asks whether the PCA router's chat-vs-agentic decision beats trivial baselines, over a labeled set (`data/routing_questions.json`). It needs only one embedding per question (no chat LLM), so it's cheap — but the `pca` row is meaningful only with real embeddings + a fitted model (`EMBEDDINGS_API_KEY` set); otherwise it routes on the dev sketch and is flagged.
@@ -119,6 +133,18 @@ EMBEDDINGS_API_KEY=jina_... go run ./cmd/routeeval
 ```
 
 It compares `pca` against `length` (route by query length), `hit_count` (route by graph keyword hits), and the `always_chat`/`always_agentic` baselines, reporting routing accuracy + an agentic-rate cost proxy. The bar is real: on the shipped 16-question set the `length` one-liner already scores ~75%, so the PCA router has to clear that to justify its complexity. If it doesn't, that's a legitimate finding — simplify, or fit a supervised projection (LDA) on labeled queries.
+
+**Result (real Jina embeddings + fitted model):**
+
+| Router | Routing accuracy | Agentic-rate |
+|---|---|---|
+| pca | 69% | 56% |
+| length | **75%** | 25% |
+| hit_count | 69% | 56% |
+| always_agentic | 50% | 100% |
+| always_chat | 50% | 0% |
+
+**Finding (reported honestly):** on this 16-question set the PCA router (69%) does **not** beat the trivial `length` one-liner (75%), and routes agentic more than twice as often (56% vs 25% — a higher cost). The unsupervised 2-component PCA projection is too coarse to separate chat-vs-agentic intent better than query length here. The intended next step is a **supervised projection (LDA)** fit on labeled queries, and a larger labeled routing set; until then, `length` is the honest baseline to beat. Reporting a negative result is deliberate — it is a stronger signal of rigor than a cherry-picked win.
 
 ## Quick start (Docker, no API key needed)
 
@@ -137,7 +163,7 @@ MOCK_LLM=true docker compose up --build
 OPENROUTER_API_KEY=sk-or-v1-... docker compose up --build
 ```
 
-The default model is `openai/gpt-oss-120b:free`, overridable with `DEFAULT_MODEL`. Get a free key at [openrouter.ai](https://openrouter.ai/keys).
+The default model is `nex-agi/nex-n2-pro:free`, overridable with `DEFAULT_MODEL`. Get a free key at [openrouter.ai](https://openrouter.ai/keys). Free models churn and are frequently rate-limited upstream, so the backend automatically falls through a list of fallback free models on a `429`; override the list with `FALLBACK_MODELS` (comma-separated). This keeps the live demo answering even when the primary model is throttled.
 
 ## Local development
 

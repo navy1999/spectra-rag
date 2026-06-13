@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:8080";
-const FALLBACK_MODEL = process.env.DEFAULT_MODEL ?? "openai/gpt-oss-120b:free";
+const FALLBACK_MODEL = process.env.DEFAULT_MODEL ?? "nex-agi/nex-n2-pro:free";
 
 function sse(obj: unknown): string {
   return `data: ${JSON.stringify(obj)}\n\n`;

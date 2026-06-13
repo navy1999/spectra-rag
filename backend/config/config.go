@@ -4,11 +4,17 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 )
 
 type Config struct {
-	OpenRouterAPIKey  string
-	DefaultModel      string
+	OpenRouterAPIKey string
+	DefaultModel     string
+	// FallbackModels are tried in order when the primary model returns a 429
+	// (free models are frequently rate-limited upstream). Set via FALLBACK_MODELS
+	// (comma-separated); the built-in default rotates through common free models
+	// so the live demo degrades gracefully instead of dying on a rate limit.
+	FallbackModels    []string
 	Port              string
 	MaxHops           int
 	RateLimitRPM      int
@@ -32,6 +38,7 @@ func Load() *Config {
 	return &Config{
 		OpenRouterAPIKey:  getEnv("OPENROUTER_API_KEY", ""),
 		DefaultModel:      getEnv("DEFAULT_MODEL", "nex-agi/nex-n2-pro:free"),
+		FallbackModels:    getList("FALLBACK_MODELS", []string{"openai/gpt-oss-20b:free", "nvidia/nemotron-nano-9b-v2:free", "meta-llama/llama-3.2-3b-instruct:free"}),
 		Port:              getEnv("PORT", "8080"),
 		MaxHops:           getInt("MAX_HOPS", 3),
 		RateLimitRPM:      getInt("RATE_LIMIT_RPM", 20),
@@ -59,6 +66,21 @@ func getInt(key string, def int) int {
 	if v := os.Getenv(key); v != "" {
 		if n, err := strconv.Atoi(v); err == nil {
 			return n
+		}
+	}
+	return def
+}
+
+func getList(key string, def []string) []string {
+	if v := os.Getenv(key); v != "" {
+		var out []string
+		for _, s := range strings.Split(v, ",") {
+			if s = strings.TrimSpace(s); s != "" {
+				out = append(out, s)
+			}
+		}
+		if len(out) > 0 {
+			return out
 		}
 	}
 	return def
