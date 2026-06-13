@@ -24,7 +24,7 @@ type Config struct {
 func Load() *Config {
 	return &Config{
 		OpenRouterAPIKey:  getEnv("OPENROUTER_API_KEY", ""),
-		DefaultModel:      getEnv("DEFAULT_MODEL", "meta-llama/llama-3.3-70b-instruct:free"),
+		DefaultModel:      getEnv("DEFAULT_MODEL", "nex-agi/nex-n2-pro:free"),
 		Port:              getEnv("PORT", "8080"),
 		MaxHops:           getInt("MAX_HOPS", 3),
 		RateLimitRPM:      getInt("RATE_LIMIT_RPM", 20),
