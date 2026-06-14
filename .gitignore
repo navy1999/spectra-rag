@@ -39,6 +39,9 @@ tsconfig.tsbuildinfo
 eval_cache.json
 **/eval_cache.json
 data/eval_results.json
+quality_judge_cache.json
+**/quality_judge_cache.json
+data/quality_eval_results.json
 data/routing_results.json
 # Intermediate embedding dump (duplicate of data/routing_embeddings.json, which is committed)
 data/routing_emb_classification.json

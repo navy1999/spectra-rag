@@ -26,6 +26,21 @@ TOPIC_KEYWORDS = {
     "In-Context Learning": ["in-context", "few-shot", "zero-shot", "prompt"],
 }
 
+# Readable topic names for the arXiv categories we ingest, so the recent/obscure
+# papers (which often miss the keyword topics above) still attach to a topic node.
+ARXIV_CATEGORY_TOPICS = {
+    "cs.CL": "Computation and Language",
+    "cs.LG": "Machine Learning",
+    "cs.CV": "Computer Vision",
+    "cs.AI": "Artificial Intelligence",
+    "cs.IR": "Information Retrieval",
+    "stat.ML": "Statistical Machine Learning",
+    "cs.NE": "Neural and Evolutionary Computing",
+    "eess.AS": "Audio and Speech Processing",
+    "cs.RO": "Robotics",
+    "cs.SD": "Sound",
+}
+
 
 def build_graph(papers_path: str = "data/papers.json", output_path: str = "data/graph.json"):
     papers = json.loads(Path(papers_path).read_text()) if Path(papers_path).exists() else []
@@ -36,13 +51,20 @@ def build_graph(papers_path: str = "data/papers.json", output_path: str = "data/
     nodes, edges = [], []
     seen_authors, seen_topics, seen_insts = {}, {}, {}
 
+    def ensure_topic(name):
+        if name not in seen_topics:
+            tid = f"t_{len(seen_topics)}"
+            seen_topics[name] = tid
+            nodes.append({"id": tid, "type": "topic", "name": name, "props": {}})
+        return seen_topics[name]
+
     for paper in papers:
         pid = f"p_{paper['id'].replace('.', '_')}"
         nodes.append({
             "id": pid,
             "type": "paper",
             "name": paper["title"],
-            "props": {"year": paper.get("year"), "arxiv": paper.get("id"), "abstract": paper.get("abstract", "")[:200]},
+            "props": {"year": paper.get("year"), "arxiv": paper.get("id"), "abstract": paper.get("abstract", "")[:400]},
         })
 
         # Authors
@@ -60,15 +82,17 @@ def build_graph(papers_path: str = "data/papers.json", output_path: str = "data/
                     edges.append({"from": aid, "to": seen_insts[inst], "rel": "affiliated"})
             edges.append({"from": seen_authors[author], "to": pid, "rel": "authored"})
 
-        # Topics
+        # Topics from title/abstract keywords ...
         text = (paper.get("title", "") + " " + paper.get("abstract", "")).lower()
         for topic, keywords in TOPIC_KEYWORDS.items():
             if any(kw in text for kw in keywords):
-                if topic not in seen_topics:
-                    tid = f"t_{len(seen_topics)}"
-                    seen_topics[topic] = tid
-                    nodes.append({"id": tid, "type": "topic", "name": topic, "props": {}})
-                edges.append({"from": pid, "to": seen_topics[topic], "rel": "about"})
+                edges.append({"from": pid, "to": ensure_topic(topic), "rel": "about"})
+        # ... plus the primary arXiv category, so recent/obscure papers that miss
+        # the keyword topics still attach to a topic node.
+        for cat in paper.get("categories", [])[:1]:
+            name = ARXIV_CATEGORY_TOPICS.get(cat)
+            if name:
+                edges.append({"from": pid, "to": ensure_topic(name), "rel": "about"})
 
         # Citation edges via arXiv ID regex
         for cited_id in re.findall(r'\b\d{4}\.\d{4,5}\b', paper.get("abstract", "")):
@@ -76,8 +100,10 @@ def build_graph(papers_path: str = "data/papers.json", output_path: str = "data/
 
     graph = {"nodes": nodes, "edges": edges}
     os.makedirs(os.path.dirname(output_path) or ".", exist_ok=True)
-    Path(output_path).write_text(json.dumps(graph, indent=2))
-    print(f"Graph: {len(nodes)} nodes, {len(edges)} edges → {output_path}")
+    # ensure_ascii=False + utf-8 so international author names survive intact;
+    # ASCII arrow so the summary print does not crash a cp1252 (Windows) console.
+    Path(output_path).write_text(json.dumps(graph, indent=2, ensure_ascii=False), encoding="utf-8")
+    print(f"Graph: {len(nodes)} nodes, {len(edges)} edges -> {output_path}")
 
 
 if __name__ == "__main__":

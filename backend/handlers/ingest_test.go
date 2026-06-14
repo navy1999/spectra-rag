@@ -16,7 +16,7 @@ const newGraph = `{"nodes":[{"id":"a","type":"paper","name":"Alpha"},{"id":"b","
 func ingestRouter(token string) *gin.Engine {
 	gin.SetMode(gin.TestMode)
 	g, _ := retrieval.ParseGraph([]byte(`{"nodes":[{"id":"n1","type":"paper","name":"Seed"}],"edges":[]}`))
-	h := New(&config.Config{IngestToken: token}, retrieval.NewStore(g))
+	h := New(&config.Config{IngestToken: token}, retrieval.NewStore(g), nil)
 	r := gin.New()
 	r.POST("/ingest", h.Ingest)
 	r.GET("/graph", h.GraphInfo)

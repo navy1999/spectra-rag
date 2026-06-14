@@ -48,6 +48,16 @@ func main() {
 	store := retrieval.NewStore(graph)
 	log.Printf("[spectra-rag] trie built")
 
+	// Optional node-embedding index for semantic seed retrieval. Absent → the
+	// agent loop seeds lexically only (still fully functional).
+	nodeIndex, err := retrieval.LoadNodeIndex(cfg.NodeEmbeddingsPath)
+	if err != nil {
+		log.Printf("[spectra-rag] node embeddings not loaded (%v) — retrieval seeding is lexical-only", err)
+		nodeIndex = nil
+	} else {
+		log.Printf("[spectra-rag] node embeddings loaded: %d nodes — semantic seed retrieval enabled", nodeIndex.Len())
+	}
+
 	// Gin setup
 	if !cfg.Debug {
 		gin.SetMode(gin.ReleaseMode)
@@ -58,7 +68,7 @@ func main() {
 	r.Use(middleware.RateLimit(cfg.RateLimitRPM))
 
 	// Routes
-	h := handlers.New(cfg, store)
+	h := handlers.New(cfg, store, nodeIndex)
 	r.POST("/query", h.Query)
 	r.GET("/health", h.Health)
 	r.GET("/graph", h.GraphInfo)

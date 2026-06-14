@@ -64,7 +64,7 @@ This is a demonstrator, not a production system. Status of each piece:
 
 | Component | Status | Notes |
 |-----------|--------|-------|
-| GraphRAG retrieval | Working | Keyword-scored seeding plus BFS hop expansion over the knowledge graph |
+| GraphRAG retrieval | Working | Seeds by semantic nearest-neighbor (query embedding vs. precomputed node embeddings) unioned with lexical keyword matches, then BFS hop expansion gated by the vote ensemble; retrieved chunks carry paper abstracts. Falls back to lexical-only seeding without `node_embeddings.json` |
 | Router (Alg 1) | Working, supervised | Default model is a fitted **PCA(16)→LDA** projection (`method: pca16_lda`) that separates chat-vs-agentic at 95% in-sample / 85% LOOCV. The argmin centroid gives the regime; in regime-routing mode the nearest class centroid sets the path directly. The pure-Go build does the real matvec (`components·(x−mean)`) from `data/pca_model.json` — no cgo needed; the Eigen/cgo path is an optional fast path. An unsupervised PCA model is kept at `data/pca_model.unsupervised.json` for comparison |
 | Trie Interceptor (Alg 2) | Working | Per-word and ASCII-oriented; corrects single-word near-misses, not multi-word phrases |
 | SVD Penalty (Alg 3) | Working, heuristic | Free models reject the `frequency_penalty` parameter, so the score becomes a prompt instruction rather than a logit-level penalty |
@@ -215,7 +215,7 @@ The router only carries a real signal when two things are true: queries are turn
    EMBEDDINGS_MODEL=jina-embeddings-v3          # default (1024-d)
    EMBEDDINGS_TASK=classification               # default; Jina v3 task adapter that sharpens chat-vs-agentic separation
    ```
-   The `EMBEDDINGS_TASK` adapter matters: switching Jina v3 to its `classification` task adapter is what lifts the routing signal from near-baseline to the 85% LOOCV result. Query embeddings are used **only for routing** (retrieval is graph traversal, not vector search), so the task choice is safe.
+   The `EMBEDDINGS_TASK` adapter matters: switching Jina v3 to its `classification` task adapter is what lifts the routing signal from near-baseline to the 85% LOOCV result. The query embedding is computed once and reused for both routing and **semantic seed retrieval** (cosine NN against node embeddings), so `embed_nodes.py` must use the *same* task — see step 3.
 2. **Fitted model** — the default `data/pca_model.json` is a supervised **PCA(16)→LDA** projection. To refit it from labeled routing questions:
    ```bash
    cd backend && EMBEDDINGS_API_KEY=jina_... \
@@ -228,8 +228,14 @@ The router only carries a real signal when two things are true: queries are turn
    # reports in-sample and leave-one-out CV accuracy
    ```
    To regenerate the older unsupervised PCA model instead: `EMBEDDINGS_API_KEY=jina_... python scripts/fit_pca.py`.
-3. **Deploy** — set `EMBEDDINGS_API_KEY` on the backend host (e.g. Railway) so runtime embeddings match the fitted model.
-4. **Evaluate** — score the router against length/count baselines:
+3. **Node embeddings (semantic retrieval)** — embed every graph node so retrieval seeds by meaning, not just keywords. Use the **same** `EMBEDDINGS_TASK` as the backend so the reused query vector shares the node space:
+   ```bash
+   EMBEDDINGS_API_KEY=jina_... EMBEDDINGS_TASK=classification \
+     python scripts/embed_nodes.py        # writes data/node_embeddings.json
+   ```
+   Commit `data/node_embeddings.json` so the deployed backend gets semantic seeding; without it, seeding falls back to lexical keyword matching.
+4. **Deploy** — set `EMBEDDINGS_API_KEY` (and matching `EMBEDDINGS_TASK`) on the backend host (e.g. Railway) so runtime embeddings match the fitted model and node embeddings.
+5. **Evaluate** — score the router against length/count baselines:
    ```bash
    cd backend && EMBEDDINGS_API_KEY=jina_... go run ./cmd/routeeval
    ```

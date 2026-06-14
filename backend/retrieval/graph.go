@@ -130,6 +130,12 @@ func (g *Graph) Stats() (nodes int, edges int, byType map[string]int) {
 
 func (g *Graph) NodeCount() int { return len(g.nodes) }
 
+// Node returns the node with the given id, if present.
+func (g *Graph) Node(id string) (*Node, bool) {
+	n, ok := g.nodes[id]
+	return n, ok
+}
+
 func (g *Graph) AllNodeNames() []string {
 	names := make([]string, 0, len(g.nodes))
 	for _, n := range g.nodes {

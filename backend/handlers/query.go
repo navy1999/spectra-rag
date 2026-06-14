@@ -22,19 +22,21 @@ import (
 )
 
 type Handler struct {
-	cfg      *config.Config
-	store    *retrieval.Store
-	embedder *retrieval.Embedder
-	router   *router.PCARouter
+	cfg       *config.Config
+	store     *retrieval.Store
+	embedder  *retrieval.Embedder
+	router    *router.PCARouter
+	nodeIndex *retrieval.NodeIndex // optional: semantic seed retrieval
 }
 
-func New(cfg *config.Config, store *retrieval.Store) *Handler {
+func New(cfg *config.Config, store *retrieval.Store, nodeIndex *retrieval.NodeIndex) *Handler {
 	pcaRouter, _ := router.NewPCARouter(cfg.PCACentroidsPath)
 	return &Handler{
-		cfg:      cfg,
-		store:    store,
-		embedder: retrieval.NewEmbedderWithTask(cfg.EmbeddingsAPIKey, cfg.EmbeddingsBaseURL, cfg.EmbeddingsModel, cfg.EmbeddingsTask),
-		router:   pcaRouter,
+		cfg:       cfg,
+		store:     store,
+		embedder:  retrieval.NewEmbedderWithTask(cfg.EmbeddingsAPIKey, cfg.EmbeddingsBaseURL, cfg.EmbeddingsModel, cfg.EmbeddingsTask),
+		router:    pcaRouter,
+		nodeIndex: nodeIndex,
 	}
 }
 
@@ -86,9 +88,9 @@ func (h *Handler) Query(c *gin.Context) {
 			Model:   model,
 			MockLLM: h.cfg.MockLLM,
 		}
-		loop := agent.NewAgentLoop(evalCfg, h.store.Graph(), h.cfg.MaxHops)
+		loop := agent.NewAgentLoop(evalCfg, h.store.Graph(), h.nodeIndex, h.cfg.MaxHops)
 		var metrics agent.AgentMetrics
-		contextChunks, metrics = loop.Run(req.Query)
+		contextChunks, metrics = loop.Run(req.Query, emb)
 		hops = metrics.HopsUsed
 	}
 
