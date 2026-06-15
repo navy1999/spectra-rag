@@ -14,17 +14,19 @@ type Config struct {
 	// (free models are frequently rate-limited upstream). Set via FALLBACK_MODELS
 	// (comma-separated); the built-in default rotates through common free models
 	// so the live demo degrades gracefully instead of dying on a rate limit.
-	FallbackModels    []string
-	Port              string
-	MaxHops           int
-	RateLimitRPM      int
-	MockLLM           bool
-	Debug             bool
-	GraphPath         string
-	PCACentroidsPath  string
-	PCAModelPath      string
-	OpenRouterBaseURL string
-	IngestToken       string
+	FallbackModels     []string
+	Port               string
+	MaxHops            int
+	RateLimitRPM       int
+	MockLLM            bool
+	Debug              bool
+	GraphPath          string
+	PCACentroidsPath   string
+	PCAModelPath       string
+	LDARouterPath      string
+	NodeEmbeddingsPath string
+	OpenRouterBaseURL  string
+	IngestToken        string
 
 	// Embeddings are a separate provider from the chat model. OpenRouter does
 	// not serve embeddings, so the router needs a real embeddings endpoint
@@ -42,28 +44,33 @@ type Config struct {
 
 func Load() *Config {
 	return &Config{
-		OpenRouterAPIKey:  getEnv("OPENROUTER_API_KEY", ""),
-		DefaultModel:      getEnv("DEFAULT_MODEL", "nex-agi/nex-n2-pro:free"),
-		FallbackModels:    getList("FALLBACK_MODELS", []string{"openai/gpt-oss-20b:free", "nvidia/nemotron-nano-9b-v2:free", "meta-llama/llama-3.2-3b-instruct:free"}),
-		Port:              getEnv("PORT", "8080"),
-		MaxHops:           getInt("MAX_HOPS", 3),
-		RateLimitRPM:      getInt("RATE_LIMIT_RPM", 20),
-		MockLLM:           getBool("MOCK_LLM", false),
-		Debug:             getBool("DEBUG", false),
-		GraphPath:         getEnv("GRAPH_PATH", resolveDataFile("graph.json")),
-		PCACentroidsPath:  getEnv("PCA_CENTROIDS_PATH", resolveDataFile("pca_centroids.json")),
-		PCAModelPath:      getEnv("PCA_MODEL_PATH", resolveDataFile("pca_model.json")),
-		OpenRouterBaseURL: getEnv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"),
-		IngestToken:       getEnv("INGEST_TOKEN", ""),
-		EmbeddingsBaseURL: getEnv("EMBEDDINGS_BASE_URL", "https://api.jina.ai/v1"),
-		EmbeddingsModel:   getEnv("EMBEDDINGS_MODEL", "jina-embeddings-v3"),
-		EmbeddingsAPIKey:  getEnv("EMBEDDINGS_API_KEY", ""),
-		EmbeddingsTask:    getEnv("EMBEDDINGS_TASK", "classification"),
+		OpenRouterAPIKey:   getEnv("OPENROUTER_API_KEY", ""),
+		DefaultModel:       getEnv("DEFAULT_MODEL", "nex-agi/nex-n2-pro:free"),
+		FallbackModels:     getList("FALLBACK_MODELS", []string{"openai/gpt-oss-20b:free", "nvidia/nemotron-nano-9b-v2:free", "meta-llama/llama-3.2-3b-instruct:free"}),
+		Port:               getEnv("PORT", "8080"),
+		MaxHops:            getInt("MAX_HOPS", 3),
+		RateLimitRPM:       getInt("RATE_LIMIT_RPM", 20),
+		MockLLM:            getBool("MOCK_LLM", false),
+		Debug:              getBool("DEBUG", false),
+		GraphPath:          getEnv("GRAPH_PATH", resolveDataFile("graph.json")),
+		PCACentroidsPath:   getEnv("PCA_CENTROIDS_PATH", resolveDataFile("pca_centroids.json")),
+		PCAModelPath:       getEnv("PCA_MODEL_PATH", resolveDataFile("pca_model.json")),
+		LDARouterPath:      getEnv("LDA_ROUTER_PATH", resolveDataFile("lda_router.json")),
+		NodeEmbeddingsPath: getEnv("NODE_EMBEDDINGS_PATH", resolveDataFile("node_embeddings.json")),
+		OpenRouterBaseURL:  getEnv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"),
+		IngestToken:        getEnv("INGEST_TOKEN", ""),
+		EmbeddingsBaseURL:  getEnv("EMBEDDINGS_BASE_URL", "https://api.jina.ai/v1"),
+		EmbeddingsModel:    getEnv("EMBEDDINGS_MODEL", "jina-embeddings-v3"),
+		EmbeddingsAPIKey:   getEnv("EMBEDDINGS_API_KEY", ""),
+		EmbeddingsTask:     getEnv("EMBEDDINGS_TASK", "classification"),
 	}
 }
 
 func getEnv(key, def string) string {
-	if v := os.Getenv(key); v != "" {
+	// Trim surrounding whitespace/newlines: a key pasted with a trailing newline
+	// produces an invalid Authorization header ("invalid header field value"),
+	// and none of our config values legitimately carry edge whitespace.
+	if v := strings.TrimSpace(os.Getenv(key)); v != "" {
 		return v
 	}
 	return def

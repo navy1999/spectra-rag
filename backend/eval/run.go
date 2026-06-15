@@ -73,6 +73,44 @@ func contextBlock(chunks []string) string {
 	return b.String()
 }
 
+// ContextBlock is the exported form of the prompt context block, so an
+// out-of-package harness (the pairwise judge eval) can show the judge the exact
+// context the model saw.
+func ContextBlock(chunks []string) string { return contextBlock(chunks) }
+
+// Answer generates one condition's answer for a question. It applies the spectra
+// synthesis directive (A3, in the prompt) and the trie correction (A2, post
+// hoc) only for the spectra condition. This is the single source of truth for
+// per-condition generation, shared by RunAll and the pairwise judge harness.
+func (r *Runner) Answer(q Question, cond CondName, chunks []string, freq float64) (answer string, corrections int, latencyMs int64, err error) {
+	prompt := basePrompt
+	if cond == CondRAGSpectra {
+		if instr := synthesis.PenaltyInstruction(freq); instr != "" {
+			prompt += instr + "\n\n"
+		}
+	}
+	if cond != CondRaw {
+		prompt += contextBlock(chunks)
+	}
+	prompt += "User question: " + q.Text
+
+	start := time.Now()
+	answer, err = r.LLM.Complete(prompt, r.Temp, r.MaxTokens)
+	latencyMs = time.Since(start).Milliseconds()
+	if err != nil {
+		return "", 0, latencyMs, err
+	}
+
+	if cond == CondRAGSpectra {
+		si := trie.NewInterceptor(r.Trie)
+		corrected, _ := si.ProcessToken(answer)
+		corrected += si.Flush()
+		answer = corrected
+		corrections = si.Count()
+	}
+	return answer, corrections, latencyMs, nil
+}
+
 // RunAll evaluates every question under every condition and returns the raw
 // per-answer results plus per-condition aggregates. Progress goes to stderr so
 // long, rate-limited runs are observable.
@@ -91,33 +129,10 @@ func (r *Runner) RunAll(questions []Question) ([]AnswerResult, map[CondName]*con
 		for _, cond := range Conditions {
 			fmt.Fprintf(os.Stderr, "[eval] %d/%d %s · %s\n", i+1, len(questions), q.ID, cond)
 
-			prompt := basePrompt
-			useCtx := ""
-			if cond == CondRAGSpectra {
-				if instr := synthesis.PenaltyInstruction(freq); instr != "" {
-					prompt += instr + "\n\n"
-				}
-			}
-			if cond != CondRaw {
-				useCtx = ctx
-			}
-			prompt += useCtx + "User question: " + q.Text
-
-			start := time.Now()
-			answer, err := r.LLM.Complete(prompt, r.Temp, r.MaxTokens)
-			latency := time.Since(start).Milliseconds()
+			answer, corrections, latency, err := r.Answer(q, cond, chunks, freq)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "[eval]   skipped (%v)\n", err)
 				continue
-			}
-
-			corrections := 0
-			if cond == CondRAGSpectra {
-				si := trie.NewInterceptor(r.Trie)
-				corrected, _ := si.ProcessToken(answer)
-				corrected += si.Flush()
-				answer = corrected
-				corrections = si.Count()
 			}
 
 			scoreCtx := ""

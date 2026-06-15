@@ -133,6 +133,33 @@ def fit_lda(questions_path="data/routing_questions.json", output_dir="data",
 
     y = np.array([1 if lab == "agentic" else 0 for lab in labels])
 
+    # --- Deployed decision boundary: raw shrinkage-LDA (the 97.5% model) -----
+    # The PCA(k)->LDA 2D map below is for visualization + the regime centroids.
+    # The actual chat-vs-agentic ROUTE the backend takes is a raw 1024-d
+    # shrinkage-LDA (Ledoit-Wolf), which scored 97.5% LOO (permutation-confirmed,
+    # shuffled ~49%, p=0.024) — materially better than the 2D pca16_lda. Export
+    # it as {w, b} for the Go dot-product router (data/lda_router.json); the Go
+    # side computes one dot product per query and overrides the PCA-2D path.
+    shrink = LinearDiscriminantAnalysis(solver="lsqr", shrinkage="auto")
+    shrink.fit(X, y)
+    w_raw = shrink.coef_[0].astype(float)
+    b_raw = float(shrink.intercept_[0])
+    # classes_ is sorted -> [0, 1] = [chat, agentic]; decision > 0 => classes_[1].
+    positive_class = "agentic" if shrink.classes_[1] == 1 else "chat"
+    insample = float((shrink.predict(X) == y).mean())
+    Path(output_dir).mkdir(exist_ok=True)
+    Path(f"{output_dir}/lda_router.json").write_text(json.dumps({
+        "_comment": "Raw shrinkage-LDA chat-vs-agentic boundary (the deployed router, 97.5% LOO). Predict positive_class iff w.x + b > 0.",
+        "dim": int(dim),
+        "w": w_raw.tolist(),
+        "b": b_raw,
+        "positive_class": positive_class,
+        "n_train": int(len(y)),
+        "in_sample_accuracy": insample,
+    }))
+    print(f"Saved lda_router.json (raw shrinkage-LDA, dim={dim}, in-sample {insample:.1%}, "
+          f"positive_class={positive_class}) -- the deployed decision boundary.")
+
     # --- Supervised axis: PCA(k) -> LDA, folded into one linear map ---------
     # Raw LDA on 1024 features with only ~40 samples is hopelessly
     # underdetermined and overfits (in-sample ~100%, leave-one-out ~chance). The

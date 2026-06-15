@@ -1,6 +1,6 @@
 {
   "_comment": "Phase 1 eval set. Every question must be answerable from data/graph.json (5 papers, their authors, topics, institutions). 'entities' lists canonical strings a correct answer should contain; single-token entities >= 4 chars (FlashAttention, Transformer, BERT, LoRA, Vaswani, ...) are where the trie entity guard (A2) is measurable. Edit freely.",
-  "model": "meta-llama/llama-3.2-3b-instruct:free",
+  "model": "liquid/lfm-2.5-1.2b-instruct:free",
   "questions": [
     { "id": "q01", "text": "What is FlashAttention?", "entities": ["FlashAttention", "Attention"] },
     { "id": "q02", "text": "Who is the author of FlashAttention and where do they work?", "entities": ["FlashAttention", "Tri Dao", "Stanford"] },

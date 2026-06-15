@@ -10,6 +10,7 @@ import (
 	pcacgo "github.com/navy1999/spectra-rag/backend/cgo"
 	"github.com/navy1999/spectra-rag/backend/config"
 	"github.com/navy1999/spectra-rag/backend/handlers"
+	"github.com/navy1999/spectra-rag/backend/llmcaps"
 	"github.com/navy1999/spectra-rag/backend/middleware"
 	"github.com/navy1999/spectra-rag/backend/retrieval"
 )
@@ -48,6 +49,16 @@ func main() {
 	store := retrieval.NewStore(graph)
 	log.Printf("[spectra-rag] trie built")
 
+	// Optional node-embedding index for semantic seed retrieval. Absent → the
+	// agent loop seeds lexically only (still fully functional).
+	nodeIndex, err := retrieval.LoadNodeIndex(cfg.NodeEmbeddingsPath)
+	if err != nil {
+		log.Printf("[spectra-rag] node embeddings not loaded (%v) — retrieval seeding is lexical-only", err)
+		nodeIndex = nil
+	} else {
+		log.Printf("[spectra-rag] node embeddings loaded: %d nodes — semantic seed retrieval enabled", nodeIndex.Len())
+	}
+
 	// Gin setup
 	if !cfg.Debug {
 		gin.SetMode(gin.ReleaseMode)
@@ -58,7 +69,20 @@ func main() {
 	r.Use(middleware.RateLimit(cfg.RateLimitRPM))
 
 	// Routes
-	h := handlers.New(cfg, store)
+	h := handlers.New(cfg, store, nodeIndex)
+
+	// Best-effort: fetch each model's natively-supported sampling parameters so
+	// the request builder sends real knobs (frequency_penalty, top_p, …) where
+	// available instead of heuristic stand-ins. On failure we send temperature
+	// only — always safe. Skipped in mock mode (no network).
+	if !cfg.MockLLM {
+		if caps, err := llmcaps.Fetch(cfg.OpenRouterBaseURL); err != nil {
+			log.Printf("[spectra-rag] model capabilities not fetched (%v) — sending temperature only", err)
+		} else {
+			h.SetCapabilities(caps)
+			log.Printf("[spectra-rag] model capabilities loaded — native sampling params enabled where supported")
+		}
+	}
 	r.POST("/query", h.Query)
 	r.GET("/health", h.Health)
 	r.GET("/graph", h.GraphInfo)

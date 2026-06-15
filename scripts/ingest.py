@@ -40,6 +40,16 @@ def main():
          "--output", f"{args.output_dir}/graph.json"])
     run([py, str(scripts / "fit_pca.py"), "--papers", f"{args.output_dir}/papers.json",
          "--output-dir", args.output_dir])
+    if os.environ.get("EMBEDDINGS_API_KEY"):
+        run([py, str(scripts / "embed_nodes.py"), "--graph", f"{args.output_dir}/graph.json",
+             "--out", f"{args.output_dir}/node_embeddings.json"])
+    else:
+        print("Skipping node embeddings (EMBEDDINGS_API_KEY unset); retrieval stays lexical-only.")
+
+    # Regenerate the out-of-domain eval question set from the fresh graph so the
+    # control-surface ablation (A2/A3) targets entities the model has not seen.
+    run([py, str(scripts / "make_eval_questions.py"), "--graph", f"{args.output_dir}/graph.json",
+         "--out", f"{args.output_dir}/eval_questions_ood.json"])
 
     print("\n=== Validation ===")
     missing = [f for f in REQUIRED_OUTPUTS if not Path(f).exists()]
