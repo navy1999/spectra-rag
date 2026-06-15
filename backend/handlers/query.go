@@ -23,12 +23,11 @@ import (
 )
 
 type Handler struct {
-	cfg       *config.Config
-	store     *retrieval.Store
-	embedder  *retrieval.Embedder
-	router    *router.PCARouter
-	nodeIndex *retrieval.NodeIndex  // optional: semantic seed retrieval
-	caps      *llmcaps.Capabilities // optional: per-model supported sampling params
+	cfg      *config.Config
+	store    *retrieval.Store
+	embedder *retrieval.Embedder
+	router   *router.PCARouter
+	caps     *llmcaps.Capabilities // optional: per-model supported sampling params
 }
 
 func New(cfg *config.Config, store *retrieval.Store, nodeIndex *retrieval.NodeIndex) *Handler {
@@ -40,12 +39,16 @@ func New(cfg *config.Config, store *retrieval.Store, nodeIndex *retrieval.NodeIn
 	} else {
 		log.Printf("[spectra-rag] LDA router loaded from %s — supervised chat/agentic routing active", cfg.LDARouterPath)
 	}
+	// Register the prebuilt node index on the Store so the agent loop reads it —
+	// and any topic-ingested replacement — from a single swappable source.
+	if nodeIndex != nil {
+		store.SetNodeIndex(nodeIndex)
+	}
 	return &Handler{
-		cfg:       cfg,
-		store:     store,
-		embedder:  retrieval.NewEmbedderWithTask(cfg.EmbeddingsAPIKey, cfg.EmbeddingsBaseURL, cfg.EmbeddingsModel, cfg.EmbeddingsTask),
-		router:    pcaRouter,
-		nodeIndex: nodeIndex,
+		cfg:      cfg,
+		store:    store,
+		embedder: retrieval.NewEmbedderWithTask(cfg.EmbeddingsAPIKey, cfg.EmbeddingsBaseURL, cfg.EmbeddingsModel, cfg.EmbeddingsTask),
+		router:   pcaRouter,
 	}
 }
 
@@ -103,7 +106,7 @@ func (h *Handler) Query(c *gin.Context) {
 			Model:   model,
 			MockLLM: h.cfg.MockLLM,
 		}
-		loop := agent.NewAgentLoop(evalCfg, h.store.Graph(), h.nodeIndex, h.cfg.MaxHops)
+		loop := agent.NewAgentLoop(evalCfg, h.store.Graph(), h.store.NodeIndex(), h.cfg.MaxHops)
 		var metrics agent.AgentMetrics
 		contextChunks, metrics = loop.Run(req.Query, emb)
 		hops = metrics.HopsUsed

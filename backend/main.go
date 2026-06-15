@@ -88,6 +88,15 @@ func main() {
 	r.GET("/graph", h.GraphInfo)
 	r.POST("/ingest", h.Ingest)
 
+	// v3: topic-driven ingestion — build a graph on demand from an arXiv topic,
+	// embed + index it, and hot-swap it in (single-slot background job).
+	topics := handlers.NewTopicIngester(cfg, store)
+	r.POST("/ingest/topic", topics.Ingest)
+	r.GET("/ingest/status", topics.Status)
+	if cfg.TopicIngestEnabled {
+		log.Printf("[spectra-rag] topic ingestion enabled (max %d papers/job, single-slot)", cfg.TopicIngestMaxPapers)
+	}
+
 	port := cfg.Port
 	if port == "" {
 		port = "8080"

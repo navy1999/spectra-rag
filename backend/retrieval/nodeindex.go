@@ -48,6 +48,26 @@ func LoadNodeIndex(path string) (*NodeIndex, error) {
 	return ix, nil
 }
 
+// NewNodeIndex builds an index from parallel ids and vectors computed at runtime
+// (e.g. after topic ingestion embeds the new graph's nodes). dim is taken from
+// the first vector; ids and vecs must have equal length or nil is returned.
+func NewNodeIndex(ids []string, vecs [][]float32) *NodeIndex {
+	if len(ids) != len(vecs) || len(ids) == 0 {
+		return nil
+	}
+	ix := &NodeIndex{}
+	for i := range ids {
+		v := vecs[i]
+		if ix.dim == 0 {
+			ix.dim = len(v)
+		}
+		ix.ids = append(ix.ids, ids[i])
+		ix.vecs = append(ix.vecs, v)
+		ix.norms = append(ix.norms, l2norm(v))
+	}
+	return ix
+}
+
 // Len reports the number of indexed nodes (0 for a nil index).
 func (ix *NodeIndex) Len() int {
 	if ix == nil {

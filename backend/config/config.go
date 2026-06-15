@@ -28,6 +28,11 @@ type Config struct {
 	OpenRouterBaseURL  string
 	IngestToken        string
 
+	// Topic-driven ingestion (v3): build a graph on demand from an arXiv topic.
+	ArxivBaseURL         string
+	TopicIngestMaxPapers int
+	TopicIngestEnabled   bool
+
 	// Embeddings are a separate provider from the chat model. OpenRouter does
 	// not serve embeddings, so the router needs a real embeddings endpoint
 	// (default Jina) for its PCA projection to be semantically meaningful.
@@ -59,10 +64,14 @@ func Load() *Config {
 		NodeEmbeddingsPath: getEnv("NODE_EMBEDDINGS_PATH", resolveDataFile("node_embeddings.json")),
 		OpenRouterBaseURL:  getEnv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"),
 		IngestToken:        getEnv("INGEST_TOKEN", ""),
-		EmbeddingsBaseURL:  getEnv("EMBEDDINGS_BASE_URL", "https://api.jina.ai/v1"),
-		EmbeddingsModel:    getEnv("EMBEDDINGS_MODEL", "jina-embeddings-v3"),
-		EmbeddingsAPIKey:   getEnv("EMBEDDINGS_API_KEY", ""),
-		EmbeddingsTask:     getEnv("EMBEDDINGS_TASK", "classification"),
+
+		ArxivBaseURL:         getEnv("ARXIV_BASE_URL", "https://export.arxiv.org/api"),
+		TopicIngestMaxPapers: getInt("TOPIC_INGEST_MAX_PAPERS", 60),
+		TopicIngestEnabled:   getBool("TOPIC_INGEST_ENABLED", true),
+		EmbeddingsBaseURL:    getEnv("EMBEDDINGS_BASE_URL", "https://api.jina.ai/v1"),
+		EmbeddingsModel:      getEnv("EMBEDDINGS_MODEL", "jina-embeddings-v3"),
+		EmbeddingsAPIKey:     getEnv("EMBEDDINGS_API_KEY", ""),
+		EmbeddingsTask:       getEnv("EMBEDDINGS_TASK", "classification"),
 	}
 }
 

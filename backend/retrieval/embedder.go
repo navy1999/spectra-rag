@@ -89,6 +89,67 @@ func (e *Embedder) Embed(text string) ([]float32, error) {
 	return emb, nil
 }
 
+// EmbedBatch embeds many texts, batching requests to the provider (OpenAI-style
+// array input). Returned vectors are in the same order as texts. With no key it
+// returns deterministic mock vectors. Used to embed a freshly ingested graph's
+// nodes after topic ingestion.
+func (e *Embedder) EmbedBatch(texts []string) ([][]float32, error) {
+	out := make([][]float32, len(texts))
+	if e.apiKey == "" {
+		for i, t := range texts {
+			out[i] = mockEmbedding(t)
+		}
+		return out, nil
+	}
+	const batch = 32
+	for start := 0; start < len(texts); start += batch {
+		end := start + batch
+		if end > len(texts) {
+			end = len(texts)
+		}
+		chunk := texts[start:end]
+
+		payload := map[string]interface{}{"model": e.model, "input": chunk}
+		if e.task != "" {
+			payload["task"] = e.task
+		}
+		body, _ := json.Marshal(payload)
+		req, _ := http.NewRequest("POST", e.baseURL+"/embeddings", bytes.NewReader(body))
+		req.Header.Set("Authorization", "Bearer "+e.apiKey)
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return nil, fmt.Errorf("embeddings batch request failed: %w", err)
+		}
+		raw, _ := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if resp.StatusCode >= 400 {
+			snippet := raw
+			if len(snippet) > 512 {
+				snippet = snippet[:512]
+			}
+			return nil, fmt.Errorf("embeddings provider HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(snippet)))
+		}
+		var result struct {
+			Data []struct {
+				Embedding []float32 `json:"embedding"`
+			} `json:"data"`
+		}
+		if err := json.Unmarshal(raw, &result); err != nil {
+			return nil, fmt.Errorf("decode embeddings batch: %w", err)
+		}
+		if len(result.Data) != len(chunk) {
+			return nil, fmt.Errorf("embeddings batch returned %d vectors for %d inputs", len(result.Data), len(chunk))
+		}
+		for j := range chunk {
+			out[start+j] = result.Data[j].Embedding
+			e.cache.Store(chunk[j], result.Data[j].Embedding)
+		}
+	}
+	return out, nil
+}
+
 func mockEmbedding(text string) []float32 {
 	// 384-dim deterministic hash vector. Offline/dev only; not semantic.
 	emb := make([]float32, 384)
