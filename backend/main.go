@@ -10,6 +10,7 @@ import (
 	pcacgo "github.com/navy1999/spectra-rag/backend/cgo"
 	"github.com/navy1999/spectra-rag/backend/config"
 	"github.com/navy1999/spectra-rag/backend/handlers"
+	"github.com/navy1999/spectra-rag/backend/llmcaps"
 	"github.com/navy1999/spectra-rag/backend/middleware"
 	"github.com/navy1999/spectra-rag/backend/retrieval"
 )
@@ -69,6 +70,19 @@ func main() {
 
 	// Routes
 	h := handlers.New(cfg, store, nodeIndex)
+
+	// Best-effort: fetch each model's natively-supported sampling parameters so
+	// the request builder sends real knobs (frequency_penalty, top_p, …) where
+	// available instead of heuristic stand-ins. On failure we send temperature
+	// only — always safe. Skipped in mock mode (no network).
+	if !cfg.MockLLM {
+		if caps, err := llmcaps.Fetch(cfg.OpenRouterBaseURL); err != nil {
+			log.Printf("[spectra-rag] model capabilities not fetched (%v) — sending temperature only", err)
+		} else {
+			h.SetCapabilities(caps)
+			log.Printf("[spectra-rag] model capabilities loaded — native sampling params enabled where supported")
+		}
+	}
 	r.POST("/query", h.Query)
 	r.GET("/health", h.Health)
 	r.GET("/graph", h.GraphInfo)

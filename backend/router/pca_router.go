@@ -67,6 +67,23 @@ type PCARouter struct {
 	// routeByRegime is on (default "logic"); any other nearest centroid routes
 	// agentic. Lets the fitter name classes without a Go change.
 	chatRegime string
+	// lda is an optional supervised path classifier over the RAW embedding
+	// (w·x + b). When set it OVERRIDES the path decision (it is the measured
+	// 97.5% LOO model); the PCA-2D projection still drives temperature + viz.
+	lda *ldaRouter
+}
+
+// LoadLDA attaches the supervised raw-embedding path classifier produced by
+// scripts/fit_lda.py (data/lda_router.json). Returns an error (non-fatal to the
+// caller) if the file is absent or malformed, in which case routing falls back
+// to the PCA-2D policy.
+func (r *PCARouter) LoadLDA(path string) error {
+	l, err := loadLDA(path)
+	if err != nil {
+		return err
+	}
+	r.lda = l
+	return nil
 }
 
 // Policy constants. The agentic path triggers when confidence drops below 0.5.
@@ -152,7 +169,17 @@ func (r *PCARouter) Route(embedding []float32) (*RouteDecision, error) {
 	if err != nil {
 		proj = [2]float64{0, 0}
 	}
-	return r.decide(proj), nil
+	d := r.decide(proj)
+	// Supervised override: the raw-embedding LDA boundary is the measured 97.5%
+	// path classifier. PCA-2D still set regime/temperature/confidence above; we
+	// only replace the chat-vs-agentic decision when the LDA model is present and
+	// its dimension matches the embedding.
+	if r.lda != nil {
+		if path, ok := r.lda.decide(embedding); ok {
+			d.Path = path
+		}
+	}
+	return d, nil
 }
 
 // decide applies the routing policy to a projected point. Split from Route so

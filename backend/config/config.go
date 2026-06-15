@@ -23,6 +23,7 @@ type Config struct {
 	GraphPath          string
 	PCACentroidsPath   string
 	PCAModelPath       string
+	LDARouterPath      string
 	NodeEmbeddingsPath string
 	OpenRouterBaseURL  string
 	IngestToken        string
@@ -54,6 +55,7 @@ func Load() *Config {
 		GraphPath:          getEnv("GRAPH_PATH", resolveDataFile("graph.json")),
 		PCACentroidsPath:   getEnv("PCA_CENTROIDS_PATH", resolveDataFile("pca_centroids.json")),
 		PCAModelPath:       getEnv("PCA_MODEL_PATH", resolveDataFile("pca_model.json")),
+		LDARouterPath:      getEnv("LDA_ROUTER_PATH", resolveDataFile("lda_router.json")),
 		NodeEmbeddingsPath: getEnv("NODE_EMBEDDINGS_PATH", resolveDataFile("node_embeddings.json")),
 		OpenRouterBaseURL:  getEnv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"),
 		IngestToken:        getEnv("INGEST_TOKEN", ""),

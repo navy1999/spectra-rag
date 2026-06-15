@@ -15,6 +15,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/navy1999/spectra-rag/backend/agent"
 	"github.com/navy1999/spectra-rag/backend/config"
+	"github.com/navy1999/spectra-rag/backend/llmcaps"
 	"github.com/navy1999/spectra-rag/backend/retrieval"
 	"github.com/navy1999/spectra-rag/backend/router"
 	"github.com/navy1999/spectra-rag/backend/synthesis"
@@ -26,11 +27,19 @@ type Handler struct {
 	store     *retrieval.Store
 	embedder  *retrieval.Embedder
 	router    *router.PCARouter
-	nodeIndex *retrieval.NodeIndex // optional: semantic seed retrieval
+	nodeIndex *retrieval.NodeIndex  // optional: semantic seed retrieval
+	caps      *llmcaps.Capabilities // optional: per-model supported sampling params
 }
 
 func New(cfg *config.Config, store *retrieval.Store, nodeIndex *retrieval.NodeIndex) *Handler {
 	pcaRouter, _ := router.NewPCARouter(cfg.PCACentroidsPath)
+	// Optional supervised path classifier (raw shrinkage-LDA, 97.5% LOO). When
+	// present it overrides the PCA-2D chat/agentic decision; absent → PCA policy.
+	if err := pcaRouter.LoadLDA(cfg.LDARouterPath); err != nil {
+		log.Printf("[spectra-rag] LDA router not loaded (%v) — routing uses the PCA-2D policy", err)
+	} else {
+		log.Printf("[spectra-rag] LDA router loaded from %s — supervised chat/agentic routing active", cfg.LDARouterPath)
+	}
 	return &Handler{
 		cfg:       cfg,
 		store:     store,
@@ -39,6 +48,12 @@ func New(cfg *config.Config, store *retrieval.Store, nodeIndex *retrieval.NodeIn
 		nodeIndex: nodeIndex,
 	}
 }
+
+// SetCapabilities attaches the per-model sampling-parameter table (fetched from
+// OpenRouter at startup). When set, the request builder sends native params the
+// model supports (e.g. frequency_penalty) instead of the prompt-directive
+// fallback. Nil/unset → temperature-only, which is always safe.
+func (h *Handler) SetCapabilities(c *llmcaps.Capabilities) { h.caps = c }
 
 type QueryRequest struct {
 	Query string `json:"query" binding:"required"`
@@ -95,9 +110,13 @@ func (h *Handler) Query(c *gin.Context) {
 	}
 
 	// 4. Algorithm 3: SVD/TF-IDF redundancy penalty over the retrieved context.
-	// Free models reject a frequency_penalty parameter, so the scalar is turned
-	// into a natural-language synthesis directive (PenaltyInstruction) below.
+	// If the model natively supports frequency_penalty (verified per-model via
+	// llmcaps — most do, including liquid/lfm-2.5-1.2b-instruct), we send the
+	// scalar as the REAL parameter; only when it does NOT do we fall back to the
+	// natural-language synthesis directive below. "Use the native knob where it
+	// exists; reconstruct it heuristically only when the provider omits it."
 	freqPenalty := synthesis.ComputeFrequencyPenalty(contextChunks)
+	useNativeFreqPenalty := h.caps.Supports(model, "frequency_penalty")
 
 	// 5. Route headers (known pre-stream) + in-band route event (full detail,
 	// consumed by the pipeline inspector UI).
@@ -111,8 +130,10 @@ func (h *Handler) Query(c *gin.Context) {
 	// 6. Build prompt
 	var sb strings.Builder
 	sb.WriteString("You are a helpful research assistant with access to an academic knowledge graph.\n\n")
-	if instr := synthesis.PenaltyInstruction(freqPenalty); instr != "" {
-		sb.WriteString(instr + "\n\n")
+	if !useNativeFreqPenalty {
+		if instr := synthesis.PenaltyInstruction(freqPenalty); instr != "" {
+			sb.WriteString(instr + "\n\n")
+		}
 	}
 	if len(contextChunks) > 0 {
 		sb.WriteString("Relevant context:\n")
@@ -133,20 +154,36 @@ func (h *Handler) Query(c *gin.Context) {
 	// Try the chosen model first, then fall through the configured free-model
 	// fallbacks on a 429 so a rate-limited free model doesn't kill the request.
 	candidates := append([]string{model}, h.cfg.FallbackModels...)
-	h.streamLLM(c, sb.String(), candidates, decision.Temperature, interceptor, routeEvt, start)
+
+	// The router emits a per-regime sampling profile (temperature + top_p +
+	// presence penalty); A3 contributes the native frequency_penalty when the
+	// model supports it. dispatchLLM drops any field a given candidate rejects.
+	profile := SamplingProfile{
+		Temperature:     decision.Temperature,
+		TopP:            f64(regimeTopP(decision.Regime)),
+		PresencePenalty: f64(regimePresence(decision.Regime)),
+	}
+	if useNativeFreqPenalty {
+		fp := freqPenalty
+		if fp > 1.0 {
+			fp = 1.0
+		}
+		profile.FrequencyPenalty = &fp
+	}
+	h.streamLLM(c, sb.String(), candidates, profile, interceptor, routeEvt, start)
 }
 
 // dispatchLLM issues a single streaming completion request for one model and
 // returns the live response. The caller decides whether to retry on the status.
-func (h *Handler) dispatchLLM(prompt, model string, temp float64) (*http.Response, error) {
-	body, _ := json.Marshal(map[string]interface{}{
-		"model": model,
-		"messages": []map[string]string{
-			{"role": "user", "content": prompt},
-		},
-		"temperature": temp,
-		"stream":      true,
-	})
+func (h *Handler) dispatchLLM(prompt, model string, profile SamplingProfile) (*http.Response, error) {
+	// samplingPayload sends temperature plus any other knob (top_p, presence/
+	// frequency penalty) the model's provider natively accepts; unsupported ones
+	// are dropped so the provider never 400s.
+	payload := samplingPayload(model, profile, h.caps)
+	payload["model"] = model
+	payload["messages"] = []map[string]string{{"role": "user", "content": prompt}}
+	payload["stream"] = true
+	body, _ := json.Marshal(payload)
 	req, _ := http.NewRequest("POST", h.cfg.OpenRouterBaseURL+"/chat/completions", bytes.NewReader(body))
 	req.Header.Set("Authorization", "Bearer "+h.cfg.OpenRouterAPIKey)
 	req.Header.Set("Content-Type", "application/json")
@@ -244,7 +281,7 @@ func metaEvent(latencyMs int64, interceptions int) string {
 	})
 }
 
-func (h *Handler) streamLLM(c *gin.Context, prompt string, models []string, temp float64, interceptor *trie.StreamInterceptor, routeEvt string, start time.Time) {
+func (h *Handler) streamLLM(c *gin.Context, prompt string, models []string, profile SamplingProfile, interceptor *trie.StreamInterceptor, routeEvt string, start time.Time) {
 	c.Header("Content-Type", "text/event-stream")
 	c.Header("Cache-Control", "no-cache")
 
@@ -255,7 +292,7 @@ func (h *Handler) streamLLM(c *gin.Context, prompt string, models []string, temp
 	var lastCode int
 	var lastDetail string
 	for i, model := range models {
-		r, err := h.dispatchLLM(prompt, model, temp)
+		r, err := h.dispatchLLM(prompt, model, profile)
 		if err != nil {
 			lastErr, lastCode = err, 0
 			continue
