@@ -35,6 +35,7 @@ export function RouteStrip({ info }: { info: RouteInfo }) {
   }
 
   const agentic = info.path === "agentic";
+  const grounded = agentic && (info.chunks ?? 0) > 0;
   const regimeColor = info.regime === "logic" ? "#0ea5e9" : info.regime === "creative" ? "#8b5cf6" : "#71717a";
   const engaged = new Set(["A1", "A2", "A3", ...(agentic ? ["A4"] : [])]);
 
@@ -48,6 +49,16 @@ export function RouteStrip({ info }: { info: RouteInfo }) {
             <span className="inline-flex items-center gap-1.5">
               <Dot color={agentic ? "#f59e0b" : "#10b981"} />
               {info.path}
+            </span>
+          }
+        />
+        <Metric
+          label="grounding"
+          tone={grounded ? "text-emerald-600" : "text-zinc-400"}
+          value={
+            <span className="inline-flex items-center gap-1.5">
+              <Dot color={grounded ? "#10b981" : "#a1a1aa"} />
+              {grounded ? "graph" : "model memory"}
             </span>
           }
         />

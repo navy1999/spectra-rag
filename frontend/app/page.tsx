@@ -22,6 +22,7 @@ export default function Home() {
   const [inspectorOpen, setInspectorOpen] = useState(true);
   const [models, setModels] = useState<ModelInfo[]>([]);
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
+  const [forceRetrieve, setForceRetrieve] = useState(false);
 
   const activeSession = sessions.find((s) => s.id === activeSessionId) ?? null;
   const messages = activeSession?.messages ?? [];
@@ -144,9 +145,9 @@ export default function Home() {
           patchMessage(sessionId, asstId, { streaming: false, failed: true });
           setIsStreaming(false);
         },
-      });
+      }, forceRetrieve);
     },
-    [activeSessionId, sessions, patchMessage, selectedModel]
+    [activeSessionId, sessions, patchMessage, selectedModel, forceRetrieve]
   );
 
   const headerTitle = activeSession ? activeSession.title : "New session";
@@ -178,7 +179,12 @@ export default function Home() {
             <DiagnosticBanner diagnostic={diagnostic} onDismiss={() => setDiagnostic(null)} />
           </div>
         )}
-        <InputBar onSend={handleSend} disabled={isStreaming} />
+        <InputBar
+          onSend={handleSend}
+          disabled={isStreaming}
+          forceRetrieve={forceRetrieve}
+          onToggleForce={() => setForceRetrieve((v) => !v)}
+        />
       </main>
 
       <PipelineInspector info={lastRouteInfo} streaming={isStreaming} open={inspectorOpen} diagnostic={diagnostic} />

@@ -31,6 +31,27 @@ export interface RouteInfo {
   centroids?: Centroid[];
 }
 
+// Topic-driven ingestion job status (GET /api/ingest/status).
+export interface TopicStatus {
+  state: "idle" | "running" | "done" | "error";
+  topic?: string;
+  stage?: string;
+  papers?: number;
+  nodes?: number;
+  edges?: number;
+  index_dim?: number;
+  compressed?: boolean;
+  error?: string;
+}
+
+// Active-graph stats (GET /api/graph).
+export interface GraphStatus {
+  nodes: number;
+  edges: number;
+  types?: Record<string, number>;
+  custom?: boolean;
+}
+
 // Which operating mode produced a response. Drives the system status badge.
 export type SpectraMode = "checking" | "pipeline" | "fallback" | "unavailable";
 

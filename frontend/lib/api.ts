@@ -9,12 +9,17 @@ export interface StreamCallbacks {
   onError: (err: Error) => void;
 }
 
-export async function sendMessage(query: string, model: string | null, callbacks: StreamCallbacks): Promise<void> {
+export async function sendMessage(
+  query: string,
+  model: string | null,
+  callbacks: StreamCallbacks,
+  forceRetrieve = false
+): Promise<void> {
   try {
     const res = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query, model: model ?? undefined }),
+      body: JSON.stringify({ query, model: model ?? undefined, force_retrieve: forceRetrieve }),
     });
 
     if (!res.ok) throw new Error(`HTTP ${res.status}`);

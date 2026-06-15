@@ -4,9 +4,11 @@ import { useState, useRef, KeyboardEvent } from "react";
 interface Props {
   onSend: (query: string) => void;
   disabled: boolean;
+  forceRetrieve: boolean;
+  onToggleForce: () => void;
 }
 
-export function InputBar({ onSend, disabled }: Props) {
+export function InputBar({ onSend, disabled, forceRetrieve, onToggleForce }: Props) {
   const [text, setText] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const tokenEstimate = Math.ceil(text.length / 4);
@@ -51,6 +53,18 @@ export function InputBar({ onSend, disabled }: Props) {
             className="max-h-[200px] flex-1 resize-none overflow-y-auto bg-transparent text-sm leading-relaxed text-accent outline-none placeholder:text-zinc-400"
           />
           <div className="flex shrink-0 items-center gap-2 pb-0.5">
+            <button
+              type="button"
+              onClick={onToggleForce}
+              title="Force retrieval from the active graph regardless of the router (auto-on for ingested corpora)"
+              className={`rounded-md border px-1.5 py-0.5 font-mono text-[10px] transition-colors ${
+                forceRetrieve
+                  ? "border-amber-300 bg-amber-50 text-amber-700"
+                  : "border-border bg-faint text-zinc-400 hover:text-zinc-600"
+              }`}
+            >
+              ground
+            </button>
             {text && <span className="font-mono text-[11px] tabular-nums text-zinc-400">~{tokenEstimate}t</span>}
             <button
               onClick={submit}

@@ -1,5 +1,6 @@
 "use client";
 import { ChatSession } from "@/lib/types";
+import { TopicIngest } from "./TopicIngest";
 
 interface Props {
   sessions: ChatSession[];
@@ -64,6 +65,9 @@ export function Sidebar({ sessions, activeSessionId, modelLabel, onNewChat, onSe
           );
         })}
       </div>
+
+      {/* Bring-your-own corpus: build a graph from an arXiv topic */}
+      <TopicIngest />
 
       {/* Footer */}
       <div className="border-t border-border px-5 py-4">
