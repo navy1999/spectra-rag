@@ -53,13 +53,16 @@ func (h *Handler) Ingest(c *gin.Context) {
 	})
 }
 
-// GraphInfo reports stats about the currently active graph.
+// GraphInfo reports stats about the currently active graph, including whether it
+// is a user-ingested (custom) corpus — the UI badges that and queries against it
+// force retrieval.
 func (h *Handler) GraphInfo(c *gin.Context) {
 	nodes, edges, byType := h.store.Graph().Stats()
 	c.JSON(http.StatusOK, gin.H{
-		"nodes": nodes,
-		"edges": edges,
-		"types": byType,
+		"nodes":  nodes,
+		"edges":  edges,
+		"types":  byType,
+		"custom": h.store.Custom(),
 	})
 }
 

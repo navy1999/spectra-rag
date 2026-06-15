@@ -59,8 +59,9 @@ func New(cfg *config.Config, store *retrieval.Store, nodeIndex *retrieval.NodeIn
 func (h *Handler) SetCapabilities(c *llmcaps.Capabilities) { h.caps = c }
 
 type QueryRequest struct {
-	Query string `json:"query" binding:"required"`
-	Model string `json:"model"` // optional per-request model override
+	Query         string `json:"query" binding:"required"`
+	Model         string `json:"model"`          // optional per-request model override
+	ForceRetrieve bool   `json:"force_retrieve"` // force the retrieval path regardless of the router
 }
 
 func (h *Handler) Query(c *gin.Context) {
@@ -95,6 +96,14 @@ func (h *Handler) Query(c *gin.Context) {
 
 	// 2. Route
 	decision, _ := h.router.Route(emb)
+	// Force the retrieval path when a custom corpus is active (you ingested it, so
+	// use it) or when the caller asks explicitly. The intent router would
+	// otherwise send some queries to chat and answer from model memory, silently
+	// ignoring a freshly ingested graph.
+	forced := h.store.Custom() || req.ForceRetrieve
+	if forced {
+		decision.Path = router.PathAgentic
+	}
 
 	// 3. Retrieve context (agentic path only)
 	var contextChunks []string

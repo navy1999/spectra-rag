@@ -16,26 +16,32 @@ type Store struct {
 	graph     *Graph
 	trie      *trie.Trie
 	nodeIndex *NodeIndex // optional semantic seed index, swapped with the graph
+	custom    bool       // true once a user-ingested graph has replaced the default
 }
 
-// NewStore builds a Store around an initial graph, constructing its Trie.
+// NewStore builds a Store around an initial (default) graph, constructing its Trie.
 func NewStore(g *Graph) *Store {
 	s := &Store{}
-	s.Set(g)
+	s.set(g, nil, false)
 	return s
 }
 
 // Set atomically replaces the active graph, rebuilds the Trie, and clears the
 // node index (a stale index from the previous graph would return ids that no
-// longer exist). Use SetWithIndex when a matching index is available.
+// longer exist). Marks the graph as user-supplied. Use SetWithIndex when a
+// matching index is available.
 func (s *Store) Set(g *Graph) {
-	s.SetWithIndex(g, nil)
+	s.set(g, nil, true)
 }
 
 // SetWithIndex atomically replaces the graph + Trie + semantic node index
 // together — the path used by topic ingestion, which embeds the new graph's
-// nodes and builds a matching index.
+// nodes and builds a matching index. Marks the graph as user-supplied.
 func (s *Store) SetWithIndex(g *Graph, idx *NodeIndex) {
+	s.set(g, idx, true)
+}
+
+func (s *Store) set(g *Graph, idx *NodeIndex, custom bool) {
 	t := trie.New()
 	for _, name := range g.AllNodeNames() {
 		t.Insert(name)
@@ -44,7 +50,17 @@ func (s *Store) SetWithIndex(g *Graph, idx *NodeIndex) {
 	s.graph = g
 	s.trie = t
 	s.nodeIndex = idx
+	s.custom = custom
 	s.mu.Unlock()
+}
+
+// Custom reports whether the active graph was ingested by a user (vs the default
+// shipped graph). Queries against a custom corpus force the retrieval path so the
+// ingested data is actually used rather than answered from model memory.
+func (s *Store) Custom() bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.custom
 }
 
 // SetNodeIndex attaches a node index to the current graph without swapping it —
