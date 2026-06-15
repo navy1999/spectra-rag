@@ -155,14 +155,13 @@ func (h *Handler) Query(c *gin.Context) {
 	// fallbacks on a 429 so a rate-limited free model doesn't kill the request.
 	candidates := append([]string{model}, h.cfg.FallbackModels...)
 
-	// The router emits a per-regime sampling profile (temperature + top_p +
-	// presence penalty); A3 contributes the native frequency_penalty when the
-	// model supports it. dispatchLLM drops any field a given candidate rejects.
-	profile := SamplingProfile{
-		Temperature:     decision.Temperature,
-		TopP:            f64(regimeTopP(decision.Regime)),
-		PresencePenalty: f64(regimePresence(decision.Regime)),
-	}
+	// Only signal-driven knobs are sent: temperature (router: regime + novelty)
+	// and frequency_penalty (A3: SVD redundancy of the retrieved context, when the
+	// model supports the native param). top_p and presence_penalty are left at the
+	// provider default (neutral) — we have no earned signal for them, and top_p in
+	// particular is redundant with temperature. dispatchLLM drops any field a given
+	// candidate model rejects.
+	profile := SamplingProfile{Temperature: decision.Temperature}
 	if useNativeFreqPenalty {
 		fp := freqPenalty
 		if fp > 1.0 {

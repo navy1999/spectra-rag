@@ -39,12 +39,3 @@ func TestSamplingPayload_NilCapsTemperatureOnly(t *testing.T) {
 		t.Errorf("nil caps must send only temperature, got %v", out)
 	}
 }
-
-func TestRegimeProfile(t *testing.T) {
-	if regimeTopP("logic") >= regimeTopP("creative") {
-		t.Error("logic should sample tighter (lower top_p) than creative")
-	}
-	if regimePresence("creative") == 0 || regimePresence("logic") != 0 {
-		t.Error("creative should carry presence penalty, logic none")
-	}
-}

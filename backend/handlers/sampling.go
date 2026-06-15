@@ -36,24 +36,3 @@ func samplingPayload(model string, p SamplingProfile, caps *llmcaps.Capabilities
 	}
 	return out
 }
-
-// regimeTopP / regimePresence are the router's per-regime sampling profile:
-// "logic" queries get tighter sampling, "creative" ones looser. Sent only when
-// the model supports them.
-func regimeTopP(regime string) float64 {
-	switch regime {
-	case "logic":
-		return 0.85
-	case "creative":
-		return 1.0
-	default:
-		return 0.95
-	}
-}
-
-func regimePresence(regime string) float64 {
-	if regime == "creative" {
-		return 0.3
-	}
-	return 0.0
-}
