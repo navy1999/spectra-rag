@@ -137,7 +137,7 @@ func (h *Handler) Query(c *gin.Context) {
 	c.Header("X-Route-Regime", decision.Regime)
 	c.Header("X-Route-Confidence", strconv.FormatFloat(decision.Confidence, 'f', 2, 64))
 	c.Header("X-Freq-Penalty", strconv.FormatFloat(freqPenalty, 'f', 3, 64))
-	routeEvt := routeEvent(decision, hops, len(contextChunks), freqPenalty, h.router.Centroids())
+	routeEvt := routeEvent(decision, hops, contextChunks, freqPenalty, h.router.Centroids())
 
 	// 6. Build prompt
 	var sb strings.Builder
@@ -204,10 +204,19 @@ func (h *Handler) dispatchLLM(prompt, model string, profile SamplingProfile) (*h
 // routeEvent encodes the leading SSE event describing the routing decision and
 // retrieval outcome — everything the pipeline inspector visualizes. Sent before
 // any token so the UI can light up stages while the answer streams.
-func routeEvent(d *router.RouteDecision, hops, chunks int, freqPenalty float64, centroids []router.Centroid) string {
+func routeEvent(d *router.RouteDecision, hops int, chunks []string, freqPenalty float64, centroids []router.Centroid) string {
 	cents := make([]map[string]interface{}, 0, len(centroids))
 	for _, c := range centroids {
 		cents = append(cents, map[string]interface{}{"name": c.Name, "x": c.X, "y": c.Y})
+	}
+	// Retrieved chunk labels, truncated — so the UI can show exactly which graph
+	// nodes grounded the answer (and A/B retrieval without the LLM-output confound).
+	retrieved := make([]string, 0, len(chunks))
+	for _, ch := range chunks {
+		if len(ch) > 110 {
+			ch = ch[:110] + "…"
+		}
+		retrieved = append(retrieved, ch)
 	}
 	return mustJSON(map[string]interface{}{
 		"route": map[string]interface{}{
@@ -219,7 +228,8 @@ func routeEvent(d *router.RouteDecision, hops, chunks int, freqPenalty float64, 
 			"y":           d.PCAY,
 			"distance":    d.Distance,
 			"hops":        hops,
-			"chunks":      chunks,
+			"chunks":      len(chunks),
+			"retrieved":   retrieved,
 			"freqPenalty": freqPenalty,
 			"centroids":   cents,
 		},

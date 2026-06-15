@@ -17,12 +17,13 @@ type Store struct {
 	trie      *trie.Trie
 	nodeIndex *NodeIndex // optional semantic seed index, swapped with the graph
 	custom    bool       // true once a user-ingested graph has replaced the default
+	label     string     // human label of the active corpus (e.g. a topic)
 }
 
 // NewStore builds a Store around an initial (default) graph, constructing its Trie.
 func NewStore(g *Graph) *Store {
 	s := &Store{}
-	s.set(g, nil, false)
+	s.set(g, nil, false, "default corpus")
 	return s
 }
 
@@ -31,17 +32,17 @@ func NewStore(g *Graph) *Store {
 // longer exist). Marks the graph as user-supplied. Use SetWithIndex when a
 // matching index is available.
 func (s *Store) Set(g *Graph) {
-	s.set(g, nil, true)
+	s.set(g, nil, true, "uploaded graph")
 }
 
 // SetWithIndex atomically replaces the graph + Trie + semantic node index
 // together — the path used by topic ingestion, which embeds the new graph's
-// nodes and builds a matching index. Marks the graph as user-supplied.
-func (s *Store) SetWithIndex(g *Graph, idx *NodeIndex) {
-	s.set(g, idx, true)
+// nodes and builds a matching index. label identifies the active corpus.
+func (s *Store) SetWithIndex(g *Graph, idx *NodeIndex, label string) {
+	s.set(g, idx, true, label)
 }
 
-func (s *Store) set(g *Graph, idx *NodeIndex, custom bool) {
+func (s *Store) set(g *Graph, idx *NodeIndex, custom bool, label string) {
 	t := trie.New()
 	for _, name := range g.AllNodeNames() {
 		t.Insert(name)
@@ -51,6 +52,7 @@ func (s *Store) set(g *Graph, idx *NodeIndex, custom bool) {
 	s.trie = t
 	s.nodeIndex = idx
 	s.custom = custom
+	s.label = label
 	s.mu.Unlock()
 }
 
@@ -61,6 +63,15 @@ func (s *Store) Custom() bool {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 	return s.custom
+}
+
+// Label returns the human label of the active corpus (a topic for topic
+// ingestion, "uploaded graph" for /ingest, "default corpus" at startup) so the
+// UI can always show which corpus a query runs against.
+func (s *Store) Label() string {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.label
 }
 
 // SetNodeIndex attaches a node index to the current graph without swapping it —

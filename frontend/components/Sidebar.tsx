@@ -6,6 +6,7 @@ interface Props {
   sessions: ChatSession[];
   activeSessionId: string | null;
   modelLabel?: string | null;
+  graphRefresh?: number;
   onNewChat: () => void;
   onSelectSession: (id: string) => void;
 }
@@ -18,7 +19,7 @@ function sessionMeta(s: ChatSession): string {
   return path ? `${turns} turn${turns !== 1 ? "s" : ""} · ${path}` : `${turns} turn${turns !== 1 ? "s" : ""}`;
 }
 
-export function Sidebar({ sessions, activeSessionId, modelLabel, onNewChat, onSelectSession }: Props) {
+export function Sidebar({ sessions, activeSessionId, modelLabel, graphRefresh, onNewChat, onSelectSession }: Props) {
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-border bg-sidebar">
       {/* Wordmark */}
@@ -67,7 +68,7 @@ export function Sidebar({ sessions, activeSessionId, modelLabel, onNewChat, onSe
       </div>
 
       {/* Bring-your-own corpus: build a graph from an arXiv topic */}
-      <TopicIngest />
+      <TopicIngest refresh={graphRefresh} />
 
       {/* Footer */}
       <div className="border-t border-border px-5 py-4">

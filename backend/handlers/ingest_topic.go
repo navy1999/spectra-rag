@@ -60,6 +60,9 @@ func NewTopicIngester(cfg *config.Config, store *retrieval.Store) *TopicIngester
 type topicRequest struct {
 	Query     string `json:"query" binding:"required"`
 	MaxPapers int    `json:"max_papers"`
+	// Compress overrides the size-gated default: true forces PCA compression,
+	// false forces full-dim, omitted uses the node-count threshold.
+	Compress *bool `json:"compress"`
 }
 
 // Ingest starts a background topic-ingestion job (POST /ingest/topic).
@@ -81,7 +84,7 @@ func (ti *TopicIngester) Ingest(c *gin.Context) {
 		c.JSON(http.StatusConflict, gin.H{"error": "an ingestion is already running", "status": ti.Snapshot()})
 		return
 	}
-	go ti.run(req.Query, max)
+	go ti.run(req.Query, max, req.Compress)
 	c.JSON(http.StatusAccepted, gin.H{"status": "started", "topic": req.Query, "max_papers": max})
 }
 
@@ -137,7 +140,7 @@ func (ti *TopicIngester) Snapshot() topicStatus {
 	return ti.st
 }
 
-func (ti *TopicIngester) run(query string, max int) {
+func (ti *TopicIngester) run(query string, max int, override *bool) {
 	ti.setStage("fetching arXiv")
 	papers, err := retrieval.FetchArxiv(ti.arxivURL, query, max)
 	if err != nil {
@@ -165,10 +168,14 @@ func (ti *TopicIngester) run(query string, max int) {
 		return
 	}
 
-	// Size-gated PCA compression: only worth it for large graphs (the curve in
-	// data/compression_curve.md). Small corpora stay full-dim for best recall.
+	// PCA compression: size-gated by default (only worth it for large graphs —
+	// the curve in data/compression_curve.md), but a request can force it on/off.
+	compress := ti.compressDim > 0 && len(ids) > ti.compressAbove
+	if override != nil {
+		compress = *override && ti.compressDim > 0
+	}
 	var idx *retrieval.NodeIndex
-	if ti.compressDim > 0 && len(ids) > ti.compressAbove {
+	if compress {
 		ti.setStage(fmt.Sprintf("compressing index to %dd", ti.compressDim))
 		idx = retrieval.NewCompressedNodeIndex(ids, vecs, ti.compressDim)
 	} else {
@@ -176,7 +183,7 @@ func (ti *TopicIngester) run(query string, max int) {
 	}
 
 	ti.setStage("swapping in")
-	ti.store.SetWithIndex(g, idx)
+	ti.store.SetWithIndex(g, idx, query)
 	ti.done(len(papers), nodes, edges, idx.Dim(), idx.Compressed())
 }
 

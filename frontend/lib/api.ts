@@ -76,6 +76,7 @@ export async function sendMessage(
             routeInfo.distance = r.distance;
             routeInfo.hops = r.hops ?? routeInfo.hops;
             routeInfo.chunks = r.chunks;
+            routeInfo.retrieved = r.retrieved;
             routeInfo.freqPenalty = r.freqPenalty;
             routeInfo.centroids = r.centroids;
             callbacks.onRouteInfo({ ...routeInfo });

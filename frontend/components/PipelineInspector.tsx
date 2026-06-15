@@ -209,6 +209,23 @@ export function PipelineInspector({ info, streaming, open, diagnostic }: Props) 
         </div>
       )}
 
+      {/* Retrieved chunks — what actually grounded the answer (compare these,
+          not the free-text answer, to A/B retrieval without LLM-output noise) */}
+      {has && agentic && (info!.retrieved?.length ?? 0) > 0 && (
+        <div className="mx-4 mb-3 rounded-xl border border-border bg-panel p-3 shadow-sm">
+          <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-zinc-400">
+            Retrieved · {info!.retrieved!.length}
+          </p>
+          <ul className="space-y-1">
+            {info!.retrieved!.map((c, i) => (
+              <li key={i} className="truncate font-mono text-[10px] leading-snug text-zinc-600" title={c}>
+                {c}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {/* PCA routing map */}
       <div className="mx-4 mb-3 rounded-xl border border-border bg-panel p-3 shadow-sm">
         <p className="mb-1 font-mono text-[10px] uppercase tracking-wider text-zinc-400">PCA routing space</p>

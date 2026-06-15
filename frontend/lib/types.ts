@@ -27,6 +27,7 @@ export interface RouteInfo {
   pcaY?: number;
   distance?: number;
   chunks?: number;
+  retrieved?: string[]; // labels of the retrieved graph chunks (what grounded the answer)
   freqPenalty?: number;
   centroids?: Centroid[];
 }
@@ -50,6 +51,7 @@ export interface GraphStatus {
   edges: number;
   types?: Record<string, number>;
   custom?: boolean;
+  label?: string;
 }
 
 // Which operating mode produced a response. Drives the system status badge.

@@ -9,15 +9,15 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Cool, neutral instrument palette (Vercel/Linear-adjacent).
-        canvas: "#FAFAFA",
-        offwhite: "#FAFAFA",
-        sidebar: "#F4F4F5",
-        panel: "#FFFFFF",
-        accent: "#18181B",
-        muted: "#71717A",
-        border: "#E4E4E7",
-        faint: "#F4F4F5",
+        // Warm off-white "paper" palette — softer on the eyes than cool white.
+        canvas: "#FBFAF5",
+        offwhite: "#FBFAF5",
+        sidebar: "#F4F2EB",
+        panel: "#FFFEFA",
+        accent: "#1C1B17",
+        muted: "#76726A",
+        border: "#E9E5DB",
+        faint: "#F1EEE6",
         // Status semantics.
         live: "#10B981",
         warn: "#F59E0B",

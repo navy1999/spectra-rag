@@ -5,9 +5,11 @@ import { TopicStatus, GraphStatus } from "@/lib/types";
 // TopicIngest lets the user build a fresh knowledge graph on demand from an arXiv
 // topic: POST /api/ingest/topic starts a single-slot background job; we poll
 // /api/ingest/status until it finishes, then refresh the active-graph summary.
-// Once a custom graph is active, queries auto-force retrieval (backend side).
-export function TopicIngest() {
+// Shows which corpus is currently active (so a query's grounding is never a
+// mystery) and exposes a PCA-compression toggle for A/B testing.
+export function TopicIngest({ refresh }: { refresh?: number }) {
   const [topic, setTopic] = useState("");
+  const [compress, setCompress] = useState(false);
   const [status, setStatus] = useState<TopicStatus>({ state: "idle" });
   const [graph, setGraph] = useState<GraphStatus | null>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -25,6 +27,12 @@ export function TopicIngest() {
       if (pollRef.current) clearInterval(pollRef.current);
     };
   }, [loadGraph]);
+
+  // Re-read the active graph whenever the parent signals (e.g. after each query),
+  // so an out-of-band corpus change is reflected — no more stale badge.
+  useEffect(() => {
+    loadGraph();
+  }, [refresh, loadGraph]);
 
   const poll = useCallback(() => {
     fetch("/api/ingest/status", { cache: "no-store" })
@@ -47,7 +55,7 @@ export function TopicIngest() {
     fetch("/api/ingest/topic", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query: q }),
+      body: JSON.stringify({ query: q, compress }),
     })
       .then((r) => r.json())
       .then((j) => {
@@ -59,7 +67,7 @@ export function TopicIngest() {
         pollRef.current = setInterval(poll, 1200);
       })
       .catch(() => setStatus({ state: "error", error: "request failed" }));
-  }, [topic, status.state, poll]);
+  }, [topic, compress, status.state, poll]);
 
   const running = status.state === "running";
 
@@ -68,14 +76,19 @@ export function TopicIngest() {
       <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-zinc-400">Knowledge graph</p>
 
       {graph && (
-        <p className="mb-2 text-[11px] text-zinc-500">
-          {graph.nodes} nodes · {graph.edges} edges
-          {graph.custom ? (
-            <span className="ml-1.5 rounded bg-violet-100 px-1 py-px font-mono text-[9px] font-semibold text-violet-700">custom</span>
-          ) : (
-            <span className="ml-1.5 rounded bg-faint px-1 py-px font-mono text-[9px] text-zinc-400">default</span>
-          )}
-        </p>
+        <div className="mb-2 space-y-0.5">
+          <p className="truncate text-[11px] text-zinc-600" title={graph.label}>
+            <span className="text-zinc-400">corpus:</span> {graph.label ?? "—"}
+            {graph.custom ? (
+              <span className="ml-1.5 rounded bg-violet-100 px-1 py-px font-mono text-[9px] font-semibold text-violet-700">custom</span>
+            ) : (
+              <span className="ml-1.5 rounded bg-faint px-1 py-px font-mono text-[9px] text-zinc-400">default</span>
+            )}
+          </p>
+          <p className="text-[11px] text-zinc-500">
+            {graph.nodes} nodes · {graph.edges} edges
+          </p>
+        </div>
       )}
 
       <div className="flex items-center gap-1.5">
@@ -96,6 +109,17 @@ export function TopicIngest() {
         </button>
       </div>
 
+      <label className="mt-1.5 flex items-center gap-1.5 text-[11px] text-zinc-500" title="Force PCA compression of the node index (otherwise size-gated)">
+        <input
+          type="checkbox"
+          checked={compress}
+          onChange={(e) => setCompress(e.target.checked)}
+          disabled={running}
+          className="h-3 w-3 accent-violet-600"
+        />
+        compress index (PCA)
+      </label>
+
       {status.state !== "idle" && (
         <div className="mt-2 text-[11px]">
           {running && (
@@ -107,7 +131,7 @@ export function TopicIngest() {
           {status.state === "done" && (
             <p className="text-emerald-600">
               ✓ {status.papers} papers → {status.nodes} nodes
-              {status.compressed ? ` · PCA ${status.index_dim}d` : ""}
+              {status.compressed ? ` · PCA ${status.index_dim}d` : status.index_dim ? ` · ${status.index_dim}d full` : ""}
             </p>
           )}
           {status.state === "error" && <p className="text-red-600">✕ {status.error}</p>}

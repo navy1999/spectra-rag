@@ -63,6 +63,7 @@ func (h *Handler) GraphInfo(c *gin.Context) {
 		"edges":  edges,
 		"types":  byType,
 		"custom": h.store.Custom(),
+		"label":  h.store.Label(),
 	})
 }
 

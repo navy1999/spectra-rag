@@ -56,7 +56,7 @@ type Config struct {
 func Load() *Config {
 	return &Config{
 		OpenRouterAPIKey:   getEnv("OPENROUTER_API_KEY", ""),
-		DefaultModel:       getEnv("DEFAULT_MODEL", "nex-agi/nex-n2-pro:free"),
+		DefaultModel:       getEnv("DEFAULT_MODEL", "liquid/lfm-2.5-1.2b-instruct:free"),
 		FallbackModels:     getList("FALLBACK_MODELS", []string{"openai/gpt-oss-20b:free", "nvidia/nemotron-nano-9b-v2:free", "meta-llama/llama-3.2-3b-instruct:free"}),
 		Port:               getEnv("PORT", "8080"),
 		MaxHops:            getInt("MAX_HOPS", 3),
