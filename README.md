@@ -24,16 +24,22 @@ The stack is Next.js → Go/Gin → an optional C++/Eigen PCA engine over cgo, w
 flowchart TD
     U[User Query] --> FE[Next.js Frontend]
     FE --> BE[Go Backend / Gin]
-    BE --> EMB[Embedder\nJina embeddings, or hash mock]
-    EMB --> ROUTER[Router\nraw shrinkage-LDA decision w·x+b\nplus PCA-2D for temperature and visualization]
-    ROUTER -->|chat| CHAT[Direct Chat path]
-    ROUTER -->|agentic| AGENT[Agent Loop\nsemantic + lexical seed, BFS hop expansion]
-    AGENT --> VOTE[3-Persona Letter-Vote Evaluator\nmajority A/B/C gates each hop]
-    VOTE --> SYN[SVD/TF-IDF redundancy to native frequency_penalty\nor prompt directive if unsupported]
-    SYN --> CAPS[Capability-gated request\nsends only params the model accepts]
+    BE --> EMB[Embedder\nquery -> 1024-d vector]
+    EMB --> ROUTER[Dynamic Subspace Router\nshrinkage-LDA: chat vs. agentic\nPCA-2D: temperature]
+    GRAPH[(Knowledge Graph)]
+
+    ROUTER -->|chat| CHAT[Direct Chat]
+    ROUTER -->|agentic| AGENT[Agent Loop\nseed nodes, expand one hop]
+    GRAPH --> AGENT
+    AGENT --> VOTE[3-Persona Letter-Vote Evaluator\nA/B/C majority: sufficient?]
+    VOTE -->|insufficient, hop < MAX_HOPS| AGENT
+    VOTE -->|sufficient or max hops| SYN[SVD/TF-IDF Redundancy Penalty]
+
+    SYN --> CAPS[Capability-Gated Request\nfrequency_penalty if supported,\nelse prompt directive]
     CHAT --> CAPS
-    CAPS --> TRIE[Trie Interceptor\nentity correction on the token stream]
-    TRIE --> SSE[SSE Stream + trailing meta event]
+    CAPS --> LLM[OpenRouter\nstreamed chat completion]
+    LLM --> TRIE[Trie Interceptor\nentity-name correction per token]
+    TRIE --> SSE[SSE Stream\nroute event -> tokens -> meta event]
     SSE --> FE
 ```
 
@@ -119,6 +125,24 @@ The shipped graph is a fixed arXiv slice. v3 lets you swap in a *different* one 
 It's a single-slot background job (`GET /ingest/status` polls progress); state is in-memory and ephemeral by design, since this is a single-tenant demo, not a multi-corpus store. `TOPIC_INGEST_ENABLED=false` turns the endpoint off.
 
 **A real bug this surfaced, and how it's fixed:** the A1 router classifies by *query intent*, not by what corpus is active, so "how do diffusion models work?" reads as a familiar concept and routes to `chat`, which answers from the model's training data and silently ignores a freshly-ingested corpus. Fixed by making `Store.Custom()` (true once any topic has been ingested) force the agentic/retrieval path regardless of the router's intent call, plus a manual **ground** toggle (`force_retrieve`) in the UI for the default graph. The pipeline inspector's new **grounding** indicator (`graph` vs `model memory`) and **Retrieved · N** chunk list make this visible and let you A/B retrieval without LLM-output noise.
+
+```mermaid
+flowchart TD
+    SIDEBAR[Sidebar: topic query] -->|POST /ingest/topic| JOB{{Single-slot background job}}
+    JOB -.->|polled by| STATUS[GET /ingest/status]
+
+    JOB --> FETCH[Fetch arXiv papers\nrecent-first, <= TOPIC_INGEST_MAX_PAPERS]
+    FETCH --> BUILD[Build graph\nBuildGraphFromPapers]
+    BUILD --> EMBED[Embed every node]
+    EMBED --> GATE{above NODE_INDEX_COMPRESS_THRESHOLD\nor compress toggle?}
+    GATE -->|yes| COMPRESS[PCA-compress index\nto NODE_INDEX_COMPRESS_DIM]
+    GATE -->|no| SWAP
+    COMPRESS --> SWAP[Atomic hot-swap\nStore.SetWithIndex]
+
+    SWAP --> GRAPH[(Knowledge Graph + Semantic Index)]
+    SWAP --> CUSTOM[Store.Custom -> true]
+    CUSTOM -.->|forces agentic path,\nbypassing the router's chat/agentic call| ROUTER[Router]
+```
 
 The PCA-compression default is backed by a measured tradeoff (recall@10 vs full-dim cosine neighbours over 282 nodes, [`data/compression_curve.md`](data/compression_curve.md)):
 
