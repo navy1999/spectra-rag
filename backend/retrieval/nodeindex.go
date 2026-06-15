@@ -17,6 +17,9 @@ type NodeIndex struct {
 	vecs  [][]float32
 	norms []float64
 	dim   int
+	// basis is set when the index is PCA-compressed: stored vecs are k-dim and a
+	// full-dim query is projected through basis before search. nil = full-dim.
+	basis *pcaBasis
 }
 
 // LoadNodeIndex reads data/node_embeddings.json:
@@ -68,6 +71,29 @@ func NewNodeIndex(ids []string, vecs [][]float32) *NodeIndex {
 	return ix
 }
 
+// NewCompressedNodeIndex fits a k-component PCA over the (full-dim) vectors and
+// stores the projected k-dim vectors plus the basis, so queries are projected
+// into the same space at search time. Falls back to a full-dim index when PCA is
+// not applicable. This is the runtime form of the compression curve: an 8×-ish
+// smaller index for large ingested corpora.
+func NewCompressedNodeIndex(ids []string, vecs [][]float32, k int) *NodeIndex {
+	if len(ids) != len(vecs) || len(ids) == 0 {
+		return nil
+	}
+	basis := fitPCABasis(vecs, k)
+	if basis == nil {
+		return NewNodeIndex(ids, vecs)
+	}
+	ix := &NodeIndex{dim: basis.k, basis: basis}
+	for i := range ids {
+		z := basis.project(vecs[i])
+		ix.ids = append(ix.ids, ids[i])
+		ix.vecs = append(ix.vecs, z)
+		ix.norms = append(ix.norms, l2norm(z))
+	}
+	return ix
+}
+
 // Len reports the number of indexed nodes (0 for a nil index).
 func (ix *NodeIndex) Len() int {
 	if ix == nil {
@@ -76,11 +102,34 @@ func (ix *NodeIndex) Len() int {
 	return len(ix.ids)
 }
 
+// Dim reports the stored vector dimension (the compressed k when PCA-compressed).
+func (ix *NodeIndex) Dim() int {
+	if ix == nil {
+		return 0
+	}
+	return ix.dim
+}
+
+// Compressed reports whether the index is PCA-compressed.
+func (ix *NodeIndex) Compressed() bool {
+	return ix != nil && ix.basis != nil
+}
+
 // Nearest returns up to k node IDs most cosine-similar to q, best first. Returns
 // nil when the index is empty or the query dimension doesn't match (so callers
 // fall back to lexical seeding rather than routing on a mismatched space).
 func (ix *NodeIndex) Nearest(q []float32, k int) []string {
-	if ix == nil || len(q) == 0 || (ix.dim != 0 && len(q) != ix.dim) {
+	if ix == nil || len(q) == 0 {
+		return nil
+	}
+	// Compressed index: project the full-dim query into the PCA space before
+	// search. Full-dim index: require a matching dimension.
+	if ix.basis != nil {
+		if len(q) != len(ix.basis.mean) {
+			return nil
+		}
+		q = ix.basis.project(q)
+	} else if ix.dim != 0 && len(q) != ix.dim {
 		return nil
 	}
 	qn := l2norm(q)

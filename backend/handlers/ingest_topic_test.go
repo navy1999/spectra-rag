@@ -18,8 +18,8 @@ func TestTopicIngester_SingleSlot(t *testing.T) {
 		t.Errorf("running status = %+v", s)
 	}
 
-	ti.done(20, 95, 110)
-	if s := ti.Snapshot(); s.State != "done" || s.Papers != 20 || s.Nodes != 95 {
+	ti.done(20, 95, 110, 1024, false)
+	if s := ti.Snapshot(); s.State != "done" || s.Papers != 20 || s.Nodes != 95 || s.IndexDim != 1024 {
 		t.Errorf("done status = %+v", s)
 	}
 

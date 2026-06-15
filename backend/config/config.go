@@ -32,6 +32,12 @@ type Config struct {
 	ArxivBaseURL         string
 	TopicIngestMaxPapers int
 	TopicIngestEnabled   bool
+	// Size-gated PCA compression of the ingested node index (v3.2): when a graph
+	// has more than CompressThreshold nodes, embeddings are PCA-compressed to
+	// CompressDim dims to fit free-tier RAM. Below the threshold the index stays
+	// full-dim (best recall). Dim=0 disables compression entirely.
+	NodeIndexCompressDim       int
+	NodeIndexCompressThreshold int
 
 	// Embeddings are a separate provider from the chat model. OpenRouter does
 	// not serve embeddings, so the router needs a real embeddings endpoint
@@ -65,13 +71,15 @@ func Load() *Config {
 		OpenRouterBaseURL:  getEnv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"),
 		IngestToken:        getEnv("INGEST_TOKEN", ""),
 
-		ArxivBaseURL:         getEnv("ARXIV_BASE_URL", "https://export.arxiv.org/api"),
-		TopicIngestMaxPapers: getInt("TOPIC_INGEST_MAX_PAPERS", 60),
-		TopicIngestEnabled:   getBool("TOPIC_INGEST_ENABLED", true),
-		EmbeddingsBaseURL:    getEnv("EMBEDDINGS_BASE_URL", "https://api.jina.ai/v1"),
-		EmbeddingsModel:      getEnv("EMBEDDINGS_MODEL", "jina-embeddings-v3"),
-		EmbeddingsAPIKey:     getEnv("EMBEDDINGS_API_KEY", ""),
-		EmbeddingsTask:       getEnv("EMBEDDINGS_TASK", "classification"),
+		ArxivBaseURL:               getEnv("ARXIV_BASE_URL", "https://export.arxiv.org/api"),
+		TopicIngestMaxPapers:       getInt("TOPIC_INGEST_MAX_PAPERS", 60),
+		TopicIngestEnabled:         getBool("TOPIC_INGEST_ENABLED", true),
+		NodeIndexCompressDim:       getInt("NODE_INDEX_COMPRESS_DIM", 128),
+		NodeIndexCompressThreshold: getInt("NODE_INDEX_COMPRESS_THRESHOLD", 1500),
+		EmbeddingsBaseURL:          getEnv("EMBEDDINGS_BASE_URL", "https://api.jina.ai/v1"),
+		EmbeddingsModel:            getEnv("EMBEDDINGS_MODEL", "jina-embeddings-v3"),
+		EmbeddingsAPIKey:           getEnv("EMBEDDINGS_API_KEY", ""),
+		EmbeddingsTask:             getEnv("EMBEDDINGS_TASK", "classification"),
 	}
 }
 
