@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const BACKEND_URL = process.env.BACKEND_URL ?? "http://localhost:8080";
-const FALLBACK_MODEL = process.env.DEFAULT_MODEL ?? "nex-agi/nex-n2-pro:free";
+const FALLBACK_MODEL = process.env.DEFAULT_MODEL ?? "liquid/lfm-2.5-1.2b-instruct:free";
 
 function sse(obj: unknown): string {
   return `data: ${JSON.stringify(obj)}\n\n`;
@@ -9,7 +9,7 @@ function sse(obj: unknown): string {
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const { query, model } = body;
+  const { query, model, force_retrieve } = body;
 
   const encoder = new TextEncoder();
   const stream = new TransformStream();
@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     backendRes = await fetch(`${BACKEND_URL}/query`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ query, model }),
+      body: JSON.stringify({ query, model, force_retrieve }),
       signal: AbortSignal.timeout(60000),
     });
     if (!backendRes.ok) throw new Error(`Backend ${backendRes.status}`);

@@ -22,6 +22,8 @@ export default function Home() {
   const [inspectorOpen, setInspectorOpen] = useState(true);
   const [models, setModels] = useState<ModelInfo[]>([]);
   const [selectedModel, setSelectedModel] = useState<string | null>(null);
+  const [forceRetrieve, setForceRetrieve] = useState(false);
+  const [graphRefresh, setGraphRefresh] = useState(0);
 
   const activeSession = sessions.find((s) => s.id === activeSessionId) ?? null;
   const messages = activeSession?.messages ?? [];
@@ -139,14 +141,16 @@ export default function Home() {
         onDone: () => {
           patchMessage(sessionId, asstId, { streaming: false });
           setIsStreaming(false);
+          // Re-read the active graph in case retrieval/ingestion changed it.
+          setGraphRefresh((n) => n + 1);
         },
         onError: () => {
           patchMessage(sessionId, asstId, { streaming: false, failed: true });
           setIsStreaming(false);
         },
-      });
+      }, forceRetrieve);
     },
-    [activeSessionId, sessions, patchMessage, selectedModel]
+    [activeSessionId, sessions, patchMessage, selectedModel, forceRetrieve]
   );
 
   const headerTitle = activeSession ? activeSession.title : "New session";
@@ -157,6 +161,7 @@ export default function Home() {
         sessions={sessions}
         activeSessionId={activeSessionId}
         modelLabel={status.model ?? null}
+        graphRefresh={graphRefresh}
         onNewChat={newChat}
         onSelectSession={setActiveSessionId}
       />
@@ -178,7 +183,12 @@ export default function Home() {
             <DiagnosticBanner diagnostic={diagnostic} onDismiss={() => setDiagnostic(null)} />
           </div>
         )}
-        <InputBar onSend={handleSend} disabled={isStreaming} />
+        <InputBar
+          onSend={handleSend}
+          disabled={isStreaming}
+          forceRetrieve={forceRetrieve}
+          onToggleForce={() => setForceRetrieve((v) => !v)}
+        />
       </main>
 
       <PipelineInspector info={lastRouteInfo} streaming={isStreaming} open={inspectorOpen} diagnostic={diagnostic} />

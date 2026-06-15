@@ -201,6 +201,28 @@ export function PipelineInspector({ info, streaming, open, diagnostic }: Props) 
             {info!.hallucinationInterceptions > 0 && <KV k="corrections" v={info!.hallucinationInterceptions} tone="text-amber-600" />}
             <KV k="latency" v={`${info!.latencyMs}ms`} />
           </div>
+          <p className="mt-2 border-t border-border pt-2 font-mono text-[10px] leading-relaxed text-zinc-500">
+            sampling sent → temp {info!.temperature.toFixed(2)}
+            {agentic && (info!.freqPenalty ?? 0) > 0 ? ` · frequency_penalty ${(info!.freqPenalty ?? 0).toFixed(2)}` : ""}
+            <span className="text-zinc-400"> · native param where the model supports it</span>
+          </p>
+        </div>
+      )}
+
+      {/* Retrieved chunks — what actually grounded the answer (compare these,
+          not the free-text answer, to A/B retrieval without LLM-output noise) */}
+      {has && agentic && (info!.retrieved?.length ?? 0) > 0 && (
+        <div className="mx-4 mb-3 rounded-xl border border-border bg-panel p-3 shadow-sm">
+          <p className="mb-1.5 font-mono text-[10px] uppercase tracking-wider text-zinc-400">
+            Retrieved · {info!.retrieved!.length}
+          </p>
+          <ul className="space-y-1">
+            {info!.retrieved!.map((c, i) => (
+              <li key={i} className="truncate font-mono text-[10px] leading-snug text-zinc-600" title={c}>
+                {c}
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 
@@ -246,7 +268,7 @@ export function PipelineInspector({ info, streaming, open, diagnostic }: Props) 
         <div className="space-y-1.5 text-[11px] text-zinc-600">
           <p className="flex items-center gap-1.5"><AlgoBadge id="A1" /> router → routing + confidence</p>
           <p className="flex items-center gap-1.5"><AlgoBadge id="A2" /> trie → <span className="font-mono">logit_bias</span></p>
-          <p className="flex items-center gap-1.5"><AlgoBadge id="A3" /> svd → <span className="font-mono">frequency_penalty</span></p>
+          <p className="flex items-center gap-1.5"><AlgoBadge id="A3" /> svd → <span className="font-mono">frequency_penalty</span> (native or directive)</p>
           <p className="flex items-center gap-1.5"><AlgoBadge id="A4" /> vote → <span className="font-mono">logprobs</span></p>
         </div>
       </div>

@@ -16,7 +16,7 @@ The headline results, all measured (see [Evaluation](#evaluation)):
 - **Retrieval works, conditionally.** On out-of-distribution questions, the graph-RAG pipeline beats the bare model **87.5% of the time** (21/24 decisive, 95% CI 69–96%) in a blind, position-controlled LLM-as-judge eval — driven by retrieval grounding, not by the synthesis layers.
 - **Two of the four control surfaces are honestly *inactive* on clean graph-RAG**, and the README says so. That negative result, found and reported rather than buried, is the point.
 
-The stack is Next.js → Go/Gin → an optional C++/Eigen PCA engine over cgo, with GraphRAG-style multi-hop retrieval over a JSON knowledge graph.
+The stack is Next.js → Go/Gin → an optional C++/Eigen PCA engine over cgo, with GraphRAG-style multi-hop retrieval over a JSON knowledge graph. The shipped graph is one arXiv slice, but it's also user-swappable at runtime — type a topic in the sidebar and the backend builds a fresh graph from arXiv on the fly (see [v3](#v3--bring-your-own-corpus-topic-ingestion--compression)).
 
 ## Architecture
 
@@ -107,9 +107,20 @@ On **30 out-of-distribution questions** (obscure recent arXiv papers a small mod
 
 **Two honest conclusions.** (1) Graph-RAG substantially improves answers on entities the model can't know — both by supplying facts *and* by suppressing confident fabrication (the bare model invents author lists; the grounded model defers). (2) The A2/A3 synthesis layers produce **byte-identical** output on this path — they don't activate when the model copies correct names from context and the context isn't redundant. The 87.5% win is **retrieval**, not the synthesis surfaces, and the report is labeled accordingly.
 
-### v3 (in progress) — Embedding compression curve
+### v3 — Bring-your-own-corpus (topic ingestion + compression)
 
-To support large bring-your-own corpora on a free-tier host, node embeddings can be PCA-compressed. The tradeoff is measured ([`data/compression_curve.md`](data/compression_curve.md), recall@10 vs full-dim cosine neighbours over 282 nodes):
+The shipped graph is a fixed arXiv slice. v3 lets you swap in a *different* one at runtime: type a research area in the sidebar, and the backend
+
+1. fetches a bounded, recent-first set of arXiv papers (`POST /ingest/topic`, default ≤60 papers, `TOPIC_INGEST_MAX_PAPERS`),
+2. builds a graph from them (`retrieval.BuildGraphFromPapers`, a Go port of `scripts/build_graph.py`),
+3. embeds every node and, for graphs above `NODE_INDEX_COMPRESS_THRESHOLD` (1500 nodes) — or via a UI toggle — PCA-compresses the index to `NODE_INDEX_COMPRESS_DIM` (128) dimensions,
+4. atomically hot-swaps the active graph + semantic index (`Store.SetWithIndex`), no restart.
+
+It's a single-slot background job (`GET /ingest/status` polls progress); state is in-memory and ephemeral by design — this is a single-tenant demo, not a multi-corpus store. `TOPIC_INGEST_ENABLED=false` turns the endpoint off.
+
+**A real bug this surfaced, and how it's fixed:** the A1 router classifies by *query intent*, not by what corpus is active — "how do diffusion models work?" reads as a familiar concept and routes to `chat`, which answers from the model's training data and silently ignores a freshly-ingested corpus. Fixed by making `Store.Custom()` (true once any topic has been ingested) force the agentic/retrieval path regardless of the router's intent call, plus a manual **ground** toggle (`force_retrieve`) in the UI for the default graph. The pipeline inspector's new **grounding** indicator (`graph` vs `model memory`) and **Retrieved · N** chunk list make this visible and let you A/B retrieval without LLM-output noise.
+
+The PCA-compression default is backed by a measured tradeoff (recall@10 vs full-dim cosine neighbours over 282 nodes, [`data/compression_curve.md`](data/compression_curve.md)):
 
 | dims (K) | bytes/node | compression | recall@10 (PCA cosine) | recall@10 (whitened / Mahalanobis) |
 |---|---|---|---|---|
@@ -118,13 +129,13 @@ To support large bring-your-own corpora on a free-tier host, node embeddings can
 | 64 | 256 | 16× | 0.817 | 0.598 |
 | 32 | 128 | 32× | 0.721 | 0.620 |
 
-**8× smaller embeddings preserve 85% of exact neighbours** (K=128). And a hypothesis that *didn't* survive contact with data: **whitening (= Mahalanobis distance) hurts** — it amplifies low-variance noise axes, collapsing recall to 0.13 by K=256. So compression uses plain cosine in PCA space, not Mahalanobis.
+**8× smaller embeddings preserve 85% of exact neighbours** (K=128). A hypothesis that *didn't* survive contact with data: **whitening (= Mahalanobis distance) hurts** — it amplifies low-variance noise axes, collapsing recall to 0.13 by K=256. So compression uses plain cosine in PCA space, not Mahalanobis — and the UI's compress toggle lets you compare both at query time via the Retrieved list.
 
 ## Pipeline inspector
 
 ![Pipeline inspector demo](docs/pipeline-inspector.gif)
 
-A panel beside the chat shows, per query: a 2D map of the routing space (regime centroids, where the query landed, the winning centroid); the stage flow (embed → route → retrieve → synthesize → guard → stream) with each stage's values; and which surface ran where. Values arrive in-band over SSE (a `route` event before the first token, a `meta` event after the last). With `MOCK_LLM=true` the full pipeline runs and only the final answer is synthetic, so the inspector works without any key.
+A panel beside the chat shows, per query: a 2D map of the routing space (regime centroids, where the query landed, the winning centroid); the stage flow (embed → route → retrieve → synthesize → guard → stream) with each stage's values; the exact sampling params sent; and, on the agentic path, the **Retrieved · N** chunk list plus a **grounding** indicator (`graph` vs `model memory`). Values arrive in-band over SSE (a `route` event before the first token, a `meta` event after the last). With `MOCK_LLM=true` the full pipeline runs and only the final answer is synthetic, so the inspector works without any key.
 
 ## Quick start (Docker, no API key)
 
@@ -181,7 +192,9 @@ The deployed backend loads `data/lda_router.json` (overrides the path decision) 
 
 ## Bring your own graph
 
-The corpus is pluggable — the shipped graph is built from arXiv but the schema ([`data/graph.example.json`](data/graph.example.json)) is a flat `{nodes, edges}` document with freeform node `type`, so you can model any domain.
+The corpus is pluggable two ways — the shipped graph is one arXiv slice, not the only one.
+
+**1. Upload a graph directly.** Schema ([`data/graph.example.json`](data/graph.example.json)) is a flat `{nodes, edges}` document with freeform node `type`, so you can model any domain.
 
 ```bash
 # at startup
@@ -191,9 +204,9 @@ INGEST_TOKEN=secret go run .
 curl -X POST localhost:8080/ingest -H "Authorization: Bearer secret" --data @my-graph.json
 ```
 
-`GET /graph` reports active node/edge counts. Validation rejects empty/duplicate ids, empty names, and dangling edges. Hot-swaps are in-memory.
+**2. Build one from an arXiv topic.** The sidebar's topic box (or `POST /ingest/topic {"query": "diffusion models"}`) fetches papers, builds the graph, embeds the nodes, and hot-swaps it in — see [v3](#v3--bring-your-own-corpus-topic-ingestion--compression) above. `TOPIC_INGEST_ENABLED=false` disables it.
 
-> **Roadmap (v3):** *topic-driven* ingestion — type a research area, and the backend fetches a bounded set of arXiv papers, builds the graph, embeds + PCA-compresses the nodes (so large corpora fit free-tier RAM), and hot-swaps it in via a single-slot background job. The compression curve above is the groundwork.
+`GET /graph` reports active node/edge counts plus whether the active graph is custom (`custom`, `label`). Validation rejects empty/duplicate ids, empty names, and dangling edges. Hot-swaps are in-memory and ephemeral — a restart returns to `GRAPH_PATH`.
 
 ## Deployment
 
@@ -208,5 +221,5 @@ Expose the backend to browsers directly only with `CORS_ALLOWED_ORIGINS` set; `l
 
 - **Demonstrator, not production.** Boots with no dependencies (`data/graph.json` at startup); Python, a database, and the C++ build are all optional.
 - **Honest about scope.** Two of the four control surfaces (A2, A3) are conditional safety mechanisms that don't activate on clean graph-RAG; the routing win (A1) and the retrieval win are the load-bearing results. Routing accuracy is *not* a claim about answer quality — those are measured separately.
-- **Bounded corpus.** Retrieval quality is bounded by the graph; the shipped graph is author-heavy, so cross-paper reasoning rests mainly on shared topics. Broadening it is the v3 ingestion work.
+- **Bounded corpus.** Retrieval quality is bounded by the graph; the shipped default graph is author-heavy, so cross-paper reasoning rests mainly on shared topics. The v3 topic-ingestion flow (above) lets you swap in a denser, topic-specific graph at runtime, but each ingestion is still capped at `TOPIC_INGEST_MAX_PAPERS` (60) papers, so very broad fields will still be partial.
 - **Small-N evals.** The routing and judge results are on tens of questions with measured CIs; treat them as directional, and the author-written sets carry a distribution caveat.

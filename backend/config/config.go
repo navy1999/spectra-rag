@@ -28,6 +28,17 @@ type Config struct {
 	OpenRouterBaseURL  string
 	IngestToken        string
 
+	// Topic-driven ingestion (v3): build a graph on demand from an arXiv topic.
+	ArxivBaseURL         string
+	TopicIngestMaxPapers int
+	TopicIngestEnabled   bool
+	// Size-gated PCA compression of the ingested node index (v3.2): when a graph
+	// has more than CompressThreshold nodes, embeddings are PCA-compressed to
+	// CompressDim dims to fit free-tier RAM. Below the threshold the index stays
+	// full-dim (best recall). Dim=0 disables compression entirely.
+	NodeIndexCompressDim       int
+	NodeIndexCompressThreshold int
+
 	// Embeddings are a separate provider from the chat model. OpenRouter does
 	// not serve embeddings, so the router needs a real embeddings endpoint
 	// (default Jina) for its PCA projection to be semantically meaningful.
@@ -45,7 +56,7 @@ type Config struct {
 func Load() *Config {
 	return &Config{
 		OpenRouterAPIKey:   getEnv("OPENROUTER_API_KEY", ""),
-		DefaultModel:       getEnv("DEFAULT_MODEL", "nex-agi/nex-n2-pro:free"),
+		DefaultModel:       getEnv("DEFAULT_MODEL", "liquid/lfm-2.5-1.2b-instruct:free"),
 		FallbackModels:     getList("FALLBACK_MODELS", []string{"openai/gpt-oss-20b:free", "nvidia/nemotron-nano-9b-v2:free", "meta-llama/llama-3.2-3b-instruct:free"}),
 		Port:               getEnv("PORT", "8080"),
 		MaxHops:            getInt("MAX_HOPS", 3),
@@ -59,10 +70,16 @@ func Load() *Config {
 		NodeEmbeddingsPath: getEnv("NODE_EMBEDDINGS_PATH", resolveDataFile("node_embeddings.json")),
 		OpenRouterBaseURL:  getEnv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"),
 		IngestToken:        getEnv("INGEST_TOKEN", ""),
-		EmbeddingsBaseURL:  getEnv("EMBEDDINGS_BASE_URL", "https://api.jina.ai/v1"),
-		EmbeddingsModel:    getEnv("EMBEDDINGS_MODEL", "jina-embeddings-v3"),
-		EmbeddingsAPIKey:   getEnv("EMBEDDINGS_API_KEY", ""),
-		EmbeddingsTask:     getEnv("EMBEDDINGS_TASK", "classification"),
+
+		ArxivBaseURL:               getEnv("ARXIV_BASE_URL", "https://export.arxiv.org/api"),
+		TopicIngestMaxPapers:       getInt("TOPIC_INGEST_MAX_PAPERS", 60),
+		TopicIngestEnabled:         getBool("TOPIC_INGEST_ENABLED", true),
+		NodeIndexCompressDim:       getInt("NODE_INDEX_COMPRESS_DIM", 128),
+		NodeIndexCompressThreshold: getInt("NODE_INDEX_COMPRESS_THRESHOLD", 1500),
+		EmbeddingsBaseURL:          getEnv("EMBEDDINGS_BASE_URL", "https://api.jina.ai/v1"),
+		EmbeddingsModel:            getEnv("EMBEDDINGS_MODEL", "jina-embeddings-v3"),
+		EmbeddingsAPIKey:           getEnv("EMBEDDINGS_API_KEY", ""),
+		EmbeddingsTask:             getEnv("EMBEDDINGS_TASK", "classification"),
 	}
 }
 

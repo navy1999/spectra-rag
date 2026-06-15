@@ -23,12 +23,11 @@ import (
 )
 
 type Handler struct {
-	cfg       *config.Config
-	store     *retrieval.Store
-	embedder  *retrieval.Embedder
-	router    *router.PCARouter
-	nodeIndex *retrieval.NodeIndex  // optional: semantic seed retrieval
-	caps      *llmcaps.Capabilities // optional: per-model supported sampling params
+	cfg      *config.Config
+	store    *retrieval.Store
+	embedder *retrieval.Embedder
+	router   *router.PCARouter
+	caps     *llmcaps.Capabilities // optional: per-model supported sampling params
 }
 
 func New(cfg *config.Config, store *retrieval.Store, nodeIndex *retrieval.NodeIndex) *Handler {
@@ -40,12 +39,16 @@ func New(cfg *config.Config, store *retrieval.Store, nodeIndex *retrieval.NodeIn
 	} else {
 		log.Printf("[spectra-rag] LDA router loaded from %s — supervised chat/agentic routing active", cfg.LDARouterPath)
 	}
+	// Register the prebuilt node index on the Store so the agent loop reads it —
+	// and any topic-ingested replacement — from a single swappable source.
+	if nodeIndex != nil {
+		store.SetNodeIndex(nodeIndex)
+	}
 	return &Handler{
-		cfg:       cfg,
-		store:     store,
-		embedder:  retrieval.NewEmbedderWithTask(cfg.EmbeddingsAPIKey, cfg.EmbeddingsBaseURL, cfg.EmbeddingsModel, cfg.EmbeddingsTask),
-		router:    pcaRouter,
-		nodeIndex: nodeIndex,
+		cfg:      cfg,
+		store:    store,
+		embedder: retrieval.NewEmbedderWithTask(cfg.EmbeddingsAPIKey, cfg.EmbeddingsBaseURL, cfg.EmbeddingsModel, cfg.EmbeddingsTask),
+		router:   pcaRouter,
 	}
 }
 
@@ -56,8 +59,9 @@ func New(cfg *config.Config, store *retrieval.Store, nodeIndex *retrieval.NodeIn
 func (h *Handler) SetCapabilities(c *llmcaps.Capabilities) { h.caps = c }
 
 type QueryRequest struct {
-	Query string `json:"query" binding:"required"`
-	Model string `json:"model"` // optional per-request model override
+	Query         string `json:"query" binding:"required"`
+	Model         string `json:"model"`          // optional per-request model override
+	ForceRetrieve bool   `json:"force_retrieve"` // force the retrieval path regardless of the router
 }
 
 func (h *Handler) Query(c *gin.Context) {
@@ -92,6 +96,14 @@ func (h *Handler) Query(c *gin.Context) {
 
 	// 2. Route
 	decision, _ := h.router.Route(emb)
+	// Force the retrieval path when a custom corpus is active (you ingested it, so
+	// use it) or when the caller asks explicitly. The intent router would
+	// otherwise send some queries to chat and answer from model memory, silently
+	// ignoring a freshly ingested graph.
+	forced := h.store.Custom() || req.ForceRetrieve
+	if forced {
+		decision.Path = router.PathAgentic
+	}
 
 	// 3. Retrieve context (agentic path only)
 	var contextChunks []string
@@ -103,7 +115,7 @@ func (h *Handler) Query(c *gin.Context) {
 			Model:   model,
 			MockLLM: h.cfg.MockLLM,
 		}
-		loop := agent.NewAgentLoop(evalCfg, h.store.Graph(), h.nodeIndex, h.cfg.MaxHops)
+		loop := agent.NewAgentLoop(evalCfg, h.store.Graph(), h.store.NodeIndex(), h.cfg.MaxHops)
 		var metrics agent.AgentMetrics
 		contextChunks, metrics = loop.Run(req.Query, emb)
 		hops = metrics.HopsUsed
@@ -125,7 +137,7 @@ func (h *Handler) Query(c *gin.Context) {
 	c.Header("X-Route-Regime", decision.Regime)
 	c.Header("X-Route-Confidence", strconv.FormatFloat(decision.Confidence, 'f', 2, 64))
 	c.Header("X-Freq-Penalty", strconv.FormatFloat(freqPenalty, 'f', 3, 64))
-	routeEvt := routeEvent(decision, hops, len(contextChunks), freqPenalty, h.router.Centroids())
+	routeEvt := routeEvent(decision, hops, contextChunks, freqPenalty, h.router.Centroids())
 
 	// 6. Build prompt
 	var sb strings.Builder
@@ -192,10 +204,19 @@ func (h *Handler) dispatchLLM(prompt, model string, profile SamplingProfile) (*h
 // routeEvent encodes the leading SSE event describing the routing decision and
 // retrieval outcome — everything the pipeline inspector visualizes. Sent before
 // any token so the UI can light up stages while the answer streams.
-func routeEvent(d *router.RouteDecision, hops, chunks int, freqPenalty float64, centroids []router.Centroid) string {
+func routeEvent(d *router.RouteDecision, hops int, chunks []string, freqPenalty float64, centroids []router.Centroid) string {
 	cents := make([]map[string]interface{}, 0, len(centroids))
 	for _, c := range centroids {
 		cents = append(cents, map[string]interface{}{"name": c.Name, "x": c.X, "y": c.Y})
+	}
+	// Retrieved chunk labels, truncated — so the UI can show exactly which graph
+	// nodes grounded the answer (and A/B retrieval without the LLM-output confound).
+	retrieved := make([]string, 0, len(chunks))
+	for _, ch := range chunks {
+		if len(ch) > 110 {
+			ch = ch[:110] + "…"
+		}
+		retrieved = append(retrieved, ch)
 	}
 	return mustJSON(map[string]interface{}{
 		"route": map[string]interface{}{
@@ -207,7 +228,8 @@ func routeEvent(d *router.RouteDecision, hops, chunks int, freqPenalty float64, 
 			"y":           d.PCAY,
 			"distance":    d.Distance,
 			"hops":        hops,
-			"chunks":      chunks,
+			"chunks":      len(chunks),
+			"retrieved":   retrieved,
 			"freqPenalty": freqPenalty,
 			"centroids":   cents,
 		},

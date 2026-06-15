@@ -27,8 +27,31 @@ export interface RouteInfo {
   pcaY?: number;
   distance?: number;
   chunks?: number;
+  retrieved?: string[]; // labels of the retrieved graph chunks (what grounded the answer)
   freqPenalty?: number;
   centroids?: Centroid[];
+}
+
+// Topic-driven ingestion job status (GET /api/ingest/status).
+export interface TopicStatus {
+  state: "idle" | "running" | "done" | "error";
+  topic?: string;
+  stage?: string;
+  papers?: number;
+  nodes?: number;
+  edges?: number;
+  index_dim?: number;
+  compressed?: boolean;
+  error?: string;
+}
+
+// Active-graph stats (GET /api/graph).
+export interface GraphStatus {
+  nodes: number;
+  edges: number;
+  types?: Record<string, number>;
+  custom?: boolean;
+  label?: string;
 }
 
 // Which operating mode produced a response. Drives the system status badge.
