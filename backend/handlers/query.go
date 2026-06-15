@@ -250,8 +250,10 @@ func (h *Handler) streamMock(c *gin.Context, query, model string, decision *rout
 
 	c.Stream(func(w io.Writer) bool {
 		fmt.Fprintf(w, "data: %s\n\n", routeEvt)
+		flush(w)
 		for _, tok := range tokens {
 			fmt.Fprintf(w, "data: %s\n\n", mustJSON(map[string]string{"token": tok + " "}))
+			flush(w)
 			time.Sleep(30 * time.Millisecond)
 		}
 		latency := time.Since(start).Milliseconds()
@@ -359,6 +361,7 @@ func (h *Handler) streamLLM(c *gin.Context, prompt string, models []string, prof
 	c.Stream(func(w io.Writer) bool {
 		if !wroteRoute {
 			fmt.Fprintf(w, "data: %s\n\n", routeEvt)
+			flush(w)
 			wroteRoute = true
 		}
 		finish := func() {
@@ -399,12 +402,23 @@ func (h *Handler) streamLLM(c *gin.Context, prompt string, models []string, prof
 			emit, _ := interceptor.ProcessToken(token)
 			if emit != "" {
 				fmt.Fprintf(w, "data: %s\n\n", mustJSON(map[string]string{"token": emit}))
+				flush(w)
 			}
 		}
 		// Upstream closed the stream without an explicit [DONE].
 		finish()
 		return false
 	})
+}
+
+// flush pushes buffered SSE bytes to the client immediately. Without this,
+// Go's http.ResponseWriter buffers writes (~2KB) and Gin's c.Stream only
+// flushes once the step function returns, so short answers would otherwise
+// arrive in one or two bursts instead of token-by-token.
+func flush(w io.Writer) {
+	if f, ok := w.(http.Flusher); ok {
+		f.Flush()
+	}
 }
 
 func mustJSON(v interface{}) string {
