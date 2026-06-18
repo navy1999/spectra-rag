@@ -10,7 +10,7 @@ import { Message, ChatSession, SystemStatus, Diagnostic, ModelInfo } from "@/lib
 import { sendMessage } from "@/lib/api";
 
 function genId() {
-  return Math.random().toString(36).slice(2);
+  return crypto.randomUUID();
 }
 
 export default function Home() {
